@@ -24,35 +24,11 @@ def section_0():
     <li class='margtop'><a class='contents-el' href='#introduction'>Introduction</a></li>
     <li><ul class="contents">
         <li><a class='contents-el' href='#the-research-process'>The research process</a></li>
+        <li><a class='contents-el' href='#how-you-should-approach-these-exercises'>How you should approach these exercises</a></li>
     </ul></li>
-    <li class='margtop'><a class='contents-el' href='#content-&-learning-objectives'>Content & Learning Objectives</a></li>
-    <li><ul class="contents">
-        <li><a class='contents-el' href='#110125-model-setup-&-linear-probes'>1️⃣ Model Setup & Linear Probes</a></li>
-        <li><a class='contents-el' href='#1010125-looking-for-modular-circuits'>2️⃣ Looking for modular circuits</a></li>
-        <li><a class='contents-el' href='#12510125-neuron-interpretability:-a-deep-dive'>3️⃣ Neuron Interpretability: A Deep Dive</a></li>
-        <li><a class='contents-el' href='#1010125-training-a-probe'>4️⃣ Training a Probe</a></li>
-        <li><a class='contents-el' href='#1310125-bonus-future-work-i'm-excited-about'>5️⃣ Bonus - Future Work I'm Excited About</a></li>
-    </ul></li>
+    <li class='margtop'><a class='contents-el' href='#have-some-sense-of-proportion'>Have some sense of proportion</a></li>
+    <li class='margtop'><a class='contents-el' href='#content-learning-objectives'>Content & Learning Objectives</a></li>
     <li class='margtop'><a class='contents-el' href='#setup'>Setup</a></li>
-    <li class='margtop'><a class='contents-el' href='#background-othello,-and-othellogpt'>Background - Othello, and OthelloGPT</a></li>
-    <li><ul class="contents">
-        <li><a class='contents-el' href='#probes'>Probes</a></li>
-        <li><a class='contents-el' href='#causal-interventions'>Causal interventions</a></li>
-    </ul></li>
-    <li class='margtop'><a class='contents-el' href='#naive-implications-for-mechanistic-interpretability'>Naive Implications for Mechanistic Interpretability</a></li>
-    <li class='margtop'><a class='contents-el' href='#model'>Model</a></li>
-    <li class='margtop'><a class='contents-el' href='#loading-othello-content'>Loading Othello Content</a></li>
-    <li class='margtop'><a class='contents-el' href='#running-the-model'>Running the model</a></li>
-    <li class='margtop'><a class='contents-el' href='#exploring-game-play'>Exploring Game Play</a></li>
-    <li class='margtop'><a class='contents-el' href='#making-some-utilities'>Making some utilities</a></li>
-    <li class='margtop'><a class='contents-el' href='#using-the-probe'>Using the probe</a></li>
-    <li><ul class="contents">
-        <li><a class='contents-el' href='#computing-accuracy'>Computing Accuracy</a></li>
-    </ul></li>
-    <li class='margtop'><a class='contents-el' href='#intervening-with-the-probe'>Intervening with the probe</a></li>
-    <li><ul class="contents">
-        <li><a class='contents-el' href='#exercise-define-your-probe-directions'><b>Exercise</b> - define your probe directions</a></li>
-        <li><a class='contents-el' href='#exercise-define-the-apply-scale-function'><b>Exercise</b> - define the <code>apply_scale</code> function</a></li>
 </ul></li>""", unsafe_allow_html=True)
 
     st.markdown(r"""
@@ -60,7 +36,15 @@ def section_0():
 <img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/othello.png" width="350">
 
 
+Colab: [**exercises**](https://colab.research.google.com/drive/12YnrSDx0gbyhMKkcXoMvYZqu8oSgDEkM) | [**solutions**](https://colab.research.google.com/drive/1-b_RmzaGpnvKS_V6FFjylMYn4_JHVzXh)
+
 Please send any problems / bugs on the `#errata` channel in the [Slack group](https://join.slack.com/t/arena-la82367/shared_invite/zt-1uvoagohe-JUv9xB7Vr143pdx1UBPrzQ), and ask any questions on the dedicated channels for this chapter of material.
+
+You can toggle dark mode from the buttons on the top-right of this page.
+
+
+
+# [1.6] OthelloGPT
 
 
 ## Introduction
@@ -80,11 +64,31 @@ You can read more about the research process in [this post here](https://www.les
 
 As you're going through these exercises, I encourage you to keep thinking about how you would approach this research process. Do any of the results / approaches seem completely out of the blue for you, and if so can you think about what the justification might have been for trying them? What would you have tried first, and why?
 
+### How you should approach these exercises
+
+There's a lot of setup code for analysing OthelloGPT (this is somewhat unavoidable). There are also a lot of different plots of tensors with different dimensions and different meanings, and it can be hard to keep track of. You don't have to keep track of all of this in your head, but **we strongly recommend explaining to yourself or your pair programming partner what the significance of each result is before you move on to the next section.** Sometimes exercises and questions will prompt you to do this, but you should make it a reflex! 
+
+At the end of each subsection in the first section (which mostly consists of setup), there's a recap of all the objects we've defined, why they matter, and how they can be used. There will also be a "recap of this section" at the end of each of the later sections, where we review the key results and their significance.
+
+
+## Have some sense of proportion
+
+At a surface level, these exercises are designed to help you understand the OthelloGPT model and the forms of probing & analysis that were done on it. But it's also designed to make you a better interpretability researcher! As a result, most exercises will be doing a combination of:
+
+1. Showing you some new feature/component of OthelloGPT, and
+2. Teaching you how to use tools and interpret results in a broader mech interp context.
+
+Here is a rough conceptual graph showing all the different things you should be thinking about when going through these exercises, and how they relate to both of these goals, as well all the `transformerlens` tools which will help you.
+
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/othello-map.png" width="700">
+
+A key idea to have in mind during these exercises is the spectrum from simpler, more exploratory tools to more rigoruous, complex tools. On the far left, you have something like inspecting attention patterns, which can give a decent (but sometimes misleading) picture of what an attention head is doing. These should be some of the first tools you reach for, and you should be using them a lot even before you have concrete hypotheses about a circuit. On the far right, you have something like path patching, which is a pretty rigorous and effortful tool that is best used when you already have reasonably concrete hypotheses about a circuit. As we go through the exercises, we'll transition from left to right along this spectrum.
+
 
 ## Content & Learning Objectives
 
 
-### 1️⃣ Model Setup & Linear Probes
+#### 1️⃣ Model Setup & Linear Probes
 
 In this section, we'll set up the model that we'll use for the rest of the exercises, and load in weights. We'll also get familiar with the datasets and objects that we'll be using for this analysis. Lastly, we'll learn about **linear probes** and how they are used.
 
@@ -93,7 +97,7 @@ In this section, we'll set up the model that we'll use for the rest of the exerc
 > - Understand the basic structure of the Othello-GPT model
 > - See how our linear probe works
  
-### 2️⃣ Looking for modular circuits
+#### 2️⃣ Looking for modular circuits
 
 Here, we'll use our probe to start to analyse circuits in our model. We can apply them to our neurons' output weights to identify which neurons matter and in what way, and we can also figure out when and where information is represented in a model.
 
@@ -102,7 +106,7 @@ Here, we'll use our probe to start to analyse circuits in our model. We can appl
 > - Learn how to use our linear probe across layers
 > - Apply activation patching at a given sequence position to test hypotheses about our model
  
-### 3️⃣ Neuron Interpretability: A Deep Dive
+#### 3️⃣ Neuron Interpretability: A Deep Dive
 
 To practice neuron interpretability, we'll take a deep dive into understanding one particular neuron - the techniques and code should transfer pretty well to any other neurons!
 
@@ -113,7 +117,7 @@ The spirit of this section is to practice doing various standard things that you
 > - Learn techniques to deeply analyse single neurons
 > - Use techniques like **max activating datasets** and **spectrum plots**, and understand their strengths and limitations
  
-### 4️⃣ Training a Probe
+#### 4️⃣ Training a Probe
 
 In this section, we'll look at how to actually train our linear probe. This section is less mechanistic interpretability and more standard ML techniques, but it's still important to understand how to do this if you want to do any analysis like this yourself!
 
@@ -121,7 +125,7 @@ In this section, we'll look at how to actually train our linear probe. This sect
 > 
 > - Learn how to set up and train a linear probe, using PyTorch Lightning
  
-### 5️⃣ Bonus - Future Work I'm Excited About
+#### 5️⃣ Bonus - Future Work I'm Excited About
 
 Finally, we'll take a look at some future directions which could come from this OthelloGPT analysis. We strongly recommend you follow some of these threads of research yourself, and see where they might lead!
 
@@ -132,7 +136,6 @@ Finally, we'll take a look at some future directions which could come from this 
 ```python
 import os
 os.environ["ACCELERATE_DISABLE_RICH"] = "1"
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import sys
 import torch as t
 import torch.nn as nn
@@ -142,6 +145,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 import numpy as np
 import einops
+import wandb
 from ipywidgets import interact
 import plotly.express as px
 from ipywidgets import interact
@@ -167,6 +171,7 @@ from tqdm.notebook import tqdm
 from dataclasses import dataclass
 from pytorch_lightning.loggers import CSVLogger, WandbLogger
 import pytorch_lightning as pl
+from rich import print as rprint
 import pandas as pd
 
 # Make sure exercises are in the path
@@ -175,21 +180,53 @@ exercises_dir = Path(f"{os.getcwd().split(chapter)[0]}/{chapter}/exercises").res
 section_dir = exercises_dir / "part6_othellogpt"
 if str(exercises_dir) not in sys.path: sys.path.append(str(exercises_dir))
 
-# from plotly_utils import imshow
-from neel_plotly import line, scatter, histogram, imshow
+from plotly_utils import imshow
+from neel_plotly import scatter, line
+import part6_othellogpt.tests as tests
 
-# from part1_ray_tracing.utils import render_lines_with_plotly, setup_widget_fig_ray, setup_widget_fig_triangle
-# import part1_ray_tracing.tests as tests
+device = t.device("cuda" if t.cuda.is_available() else "cpu")
+
+t.set_grad_enabled(False)
 
 MAIN = __name__ == "__main__"
 
-
-if MAIN:
-    device = t.device("cuda" if t.cuda.is_available() else "cpu")
-    
-    t.set_grad_enabled(False);
-
 ```
+
+
+
+""", unsafe_allow_html=True)
+
+
+def section_1():
+
+    st.sidebar.markdown(r"""
+
+## Table of Contents
+
+<ul class="contents">
+    <li class='margtop'><a class='contents-el' href='#background-othello-and-othellogpt'>Background - Othello, and OthelloGPT</a></li>
+    <li><ul class="contents">
+        <li><a class='contents-el' href='#probes'>Probes</a></li>
+        <li><a class='contents-el' href='#causal-interventions'>Causal interventions</a></li>
+    </ul></li>
+    <li class='margtop'><a class='contents-el' href='#naive-implications-for-mechanistic-interpretability'>Naive Implications for Mechanistic Interpretability</a></li>
+    <li class='margtop'><a class='contents-el' href='#model'>Model</a></li>
+    <li class='margtop'><a class='contents-el' href='#loading-othello-content'>Loading Othello Content</a></li>
+    <li class='margtop'><a class='contents-el' href='#running-the-model'>Running the model</a></li>
+    <li class='margtop'><a class='contents-el' href='#exploring-game-play'>Exploring Game Play</a></li>
+    <li class='margtop'><a class='contents-el' href='#making-some-utilities'>Making some utilities</a></li>
+    <li class='margtop'><a class='contents-el' href='#using-the-probe'>Using the probe</a></li>
+    <li><ul class="contents">
+        <li><a class='contents-el' href='#computing-accuracy'>Computing Accuracy</a></li>
+        <li><a class='contents-el' href='#exercise-calculate-probe-cosine-similarities'><b>Exercise</b> - calculate probe cosine similarities</a></li>
+    </ul></li>
+    <li class='margtop'><a class='contents-el' href='#intervening-with-the-probe'>Intervening with the probe</a></li>
+    <li><ul class="contents">
+        <li><a class='contents-el' href='#exercise-define-your-probe-directions'><b>Exercise</b> - define your probe directions</a></li>
+        <li><a class='contents-el' href='#exercise-define-the-apply-scale-function'><b>Exercise</b> - define the <code>apply_scale</code> function</a></li>
+</ul></li>""", unsafe_allow_html=True)
+
+    st.markdown(r"""
 
 # 1️⃣ Model Setup & Linear Probes
 
@@ -242,7 +279,6 @@ I'm of the opinion that the best way to become less confused about a mysterious 
 
 To get started, let's load in the model that we'll be using for this chapter. A few important technical details:
 
-
 #### Vocab size & context window
 
 Games are $60$ moves, but the model can only take in $59$. It's trained to predict the next move, so they give it the first $59$ moves ($0\leq...<59$) and evaluate the predictions for each next move ($1\leq...<60$). There is no Beginning of Sequence token, and the model never tries to predict the first move of the game. This is why `d_vocab = 61` (one per possible square you can play - an 8x8 board minus the middle 4 squares which are already occupied) and `n_ctx = 59` (the context window length).
@@ -254,7 +290,6 @@ There are three ways we can refer to board squares:
 * `"label"` means the label for a square, e.g. `"A0"` or `"H7"`.
 * `"int"` means "part of the model vocabulary", i.e. we count up from 1 to 60 for the squares in lexicographic order (skipping the 4 middle squares).
 * `"string"` means "the input format of the `OthelloBoardState` class (see later for more on this). These are the integers from 0 to 63, with the middle squares *not* skipped out (so they exactly correspond to the 64 labels `A0, ..., H7`).
-    * (yes this is weird terminology, because they are actually integers not strings, but ¯\_(ツ)_/¯)
 
 To convert between these representations, we have the utility functions `to_int`, `to_string`, `str_to_label` and `int_to_label` in `tl_othello_utils.py`.
 
@@ -266,77 +301,64 @@ Black plays first in Othello. The input sequence to our transformer is a list of
 
 Here are some more files, which we won't be using directly in these exercises, but you might still like to have a look at:
 
-`tl_probing.py` is my probe training file. But it was used to train a second probe, linear_probe_L4_blank_vs_color_v1.pth . This probe actually didn't work very well for analysing the model (despite getting great accuracy) and I don't know why - it was trained on layer 4, to do a binary classification on blank vs not blank, and on my color vs their color *conditional *on not being blank (ie not evaluated if blank). For some reason, the "this cell is my color" direction has a significant dot product with the "is blank" direction, and this makes it much worse for e.g. interpreting neurons. I don't know why!
-
-`tl_scratch.py` is where I did some initial exploration, including activation patching between different final moves.
-
-`tl_exploration.py` is where I did my most recent exploration, verifying that the probe works, doing probe interventions (CTRL F for `newly_legal`) and using the probe to interpret neurons.
+* `tl_probing.py` is my probe training file. But it was used to train a second probe, linear_probe_L4_blank_vs_color_v1.pth . This probe actually didn't work very well for analysing the model (despite getting great accuracy) and I don't know why - it was trained on layer 4, to do a binary classification on blank vs not blank, and on my color vs their color *conditional *on not being blank (ie not evaluated if blank). For some reason, the "this cell is my color" direction has a significant dot product with the "is blank" direction, and this makes it much worse for e.g. interpreting neurons. I don't know why!
+* `tl_scratch.py` is where I did some initial exploration, including activation patching between different final moves.
+* `tl_exploration.py` is where I did my most recent exploration, verifying that the probe works, doing probe interventions (CTRL F for `newly_legal`) and using the probe to interpret neurons.
 
 
 ```python
-
-if MAIN:
-    cfg = HookedTransformerConfig(
-        n_layers = 8,
-        d_model = 512,
-        d_head = 64,
-        n_heads = 8,
-        d_mlp = 2048,
-        d_vocab = 61,
-        n_ctx = 59,
-        act_fn="gelu",
-        normalization_type="LNPre",
-        device=device,
-    )
-    model = HookedTransformer(cfg)
-
+cfg = HookedTransformerConfig(
+    n_layers = 8,
+    d_model = 512,
+    d_head = 64,
+    n_heads = 8,
+    d_mlp = 2048,
+    d_vocab = 61,
+    n_ctx = 59,
+    act_fn="gelu",
+    normalization_type="LNPre",
+    device=device,
+)
+model = HookedTransformer(cfg)
 ```
 
 ```python
-
-if MAIN:
-    sd = utils.download_file_from_hf("NeelNanda/Othello-GPT-Transformer-Lens", "synthetic_model.pth")
-    # champion_ship_sd = utils.download_file_from_hf("NeelNanda/Othello-GPT-Transformer-Lens", "championship_model.pth")
-    model.load_state_dict(sd)
-
+sd = utils.download_file_from_hf("NeelNanda/Othello-GPT-Transformer-Lens", "synthetic_model.pth")
+# champion_ship_sd = utils.download_file_from_hf("NeelNanda/Othello-GPT-Transformer-Lens", "championship_model.pth")
+model.load_state_dict(sd)
 ```
 
 ```python
 # An example input
+sample_input = t.tensor([[
+    20, 19, 18, 10,  2,  1, 27,  3, 41, 42, 34, 12,  4, 40, 11, 29, 43, 13, 48, 56, 
+    33, 39, 22, 44, 24,  5, 46,  6, 32, 36, 51, 58, 52, 60, 21, 53, 26, 31, 37,  9,
+    25, 38, 23, 50, 45, 17, 47, 28, 35, 30, 54, 16, 59, 49, 57, 14, 15, 55, 7
+]]).to(device)
 
-if MAIN:
-    sample_input = t.tensor([[
-        20, 19, 18, 10,  2,  1, 27,  3, 41, 42, 34, 12,  4, 40, 11, 29, 43, 13, 48, 56, 
-        33, 39, 22, 44, 24,  5, 46,  6, 32, 36, 51, 58, 52, 60, 21, 53, 26, 31, 37,  9,
-        25, 38, 23, 50, 45, 17, 47, 28, 35, 30, 54, 16, 59, 49, 57, 14, 15, 55, 7
-    ]]).to(device)
-    
-    # The argmax of the output (ie the most likely next move from each position)
-    sample_output = t.tensor([[
-        21, 41, 40, 34, 40, 41,  3, 11, 21, 43, 40, 21, 28, 50, 33, 50, 33,  5, 33,  5,
-        52, 46, 14, 46, 14, 47, 38, 57, 36, 50, 38, 15, 28, 26, 28, 59, 50, 28, 14, 28, 
-        28, 28, 28, 45, 28, 35, 15, 14, 30, 59, 49, 59, 15, 15, 14, 15,  8,  7,  8
-    ]]).to(device)
-    
-    assert (model(sample_input).argmax(dim=-1) == sample_output.to(device)).all()
+# The argmax of the output (ie the most likely next move from each position)
+sample_output = t.tensor([[
+    21, 41, 40, 34, 40, 41,  3, 11, 21, 43, 40, 21, 28, 50, 33, 50, 33,  5, 33,  5,
+    52, 46, 14, 46, 14, 47, 38, 57, 36, 50, 38, 15, 28, 26, 28, 59, 50, 28, 14, 28, 
+    28, 28, 28, 45, 28, 35, 15, 14, 30, 59, 49, 59, 15, 15, 14, 15,  8,  7,  8
+]]).to(device)
 
+assert (model(sample_input).argmax(dim=-1) == sample_output.to(device)).all()
 ```
 
 ## Loading Othello Content
 
 
 ```python
+os.chdir(section_dir)
 
-if MAIN:
-    os.chdir(section_dir)
-    
-    OTHELLO_ROOT = section_dir / "othello_world"
-    
-    if not OTHELLO_ROOT.exists():
-        !git clone https://github.com/likenneth/othello_world
-    
-    sys.path.append(str(OTHELLO_ROOT / "mechanistic_interpretability"))
+OTHELLO_ROOT = (section_dir / "othello_world").resolve()
+OTHELLO_MECHINT_ROOT = (OTHELLO_ROOT / "mechanistic_interpretability").resolve()
 
+if not OTHELLO_ROOT.exists():
+    !git clone https://github.com/likenneth/othello_world
+
+sys.path.append(str(OTHELLO_MECHINT_ROOT))
 ```
 
 ```python
@@ -350,34 +372,33 @@ We also load in the same set of games, in the same order, but in "string" format
 
 
 ```python
+# Load board data as ints (i.e. 0 to 60)
+board_seqs_int = t.tensor(np.load(OTHELLO_MECHINT_ROOT / "board_seqs_int_small.npy"), dtype=t.long)
+# Load board data as "strings" (i.e. 0 to 63 with middle squares skipped out)
+board_seqs_string = t.tensor(np.load(OTHELLO_MECHINT_ROOT / "board_seqs_string_small.npy"), dtype=t.long)
 
-if MAIN:
-    board_seqs_int = t.tensor(np.load(OTHELLO_ROOT / "board_seqs_int_small.npy"), dtype=t.long)
-    board_seqs_string = t.tensor(np.load(OTHELLO_ROOT / "board_seqs_string_small.npy"), dtype=t.long)
-    
-    num_games, length_of_game = board_seqs_int.shape
-    print("Number of games:", num_games,)
-    print("Length of game:", length_of_game)
+assert all([middle_sq not in board_seqs_string for middle_sq in [27, 28, 35, 36]])
+assert board_seqs_int.max() == 60
 
+num_games, length_of_game = board_seqs_int.shape
+print("Number of games:", num_games)
+print("Length of game:", length_of_game)
 ```
 
 ```python
 # Define possible indices (excluding the four center squares)
+stoi_indices = [i for i in range(64) if i not in [27, 28, 35, 36]]
 
-if MAIN:
-    stoi_indices = [i for i in range(64) if i not in [27, 28, 35, 36]]
-    
-    # Define our rows, and the function that converts an index into a (row, column) label, e.g. `E2`
-    alpha = "ABCDEFGH"
+# Define our rows, and the function that converts an index into a (row, column) label, e.g. `E2`
+alpha = "ABCDEFGH"
     
 def to_board_label(i):
     return f"{alpha[i//8]}{i%8}"
 
 # Get our list of board labels
 
-if MAIN:
-    board_labels = list(map(to_board_label, stoi_indices))
-
+board_labels = list(map(to_board_label, stoi_indices))
+full_board_labels = list(map(to_board_label, range(64)))
 ```
 
 ## Running the model
@@ -387,14 +408,11 @@ Let's run our model on the first 30 moves:
 
 
 ```python
+moves_int = board_seqs_int[0, :30]
 
-if MAIN:
-    moves_int = board_seqs_int[0, :30]
-    
-    # This is implicitly converted to a batch of size 1
-    logits = model(moves_int)
-    print("logits:", logits.shape)
-
+# This is implicitly converted to a batch of size 1
+logits: Tensor = model(moves_int)
+print("logits:", logits.shape)
 ```
 
 We take the final vector of logits. We convert it to log probs and we then remove the first element (corresponding to passing, and we've filtered out all games with passing) and get the 60 logits. This is 64-4 because the model's vocab is compressed, since the center 4 squares can't be played.
@@ -403,20 +421,22 @@ We then convert it to an 8 x 8 grid and plot it, with some tensor magic:
 
 
 ```python
+logit_vec = logits[0, -1]
+log_probs = logit_vec.log_softmax(-1)
+# Remove the "pass" move (the zeroth vocab item)
+log_probs = log_probs[1:]
+assert len(log_probs)==60
 
-if MAIN:
-    logit_vec = logits[0, -1]
-    log_probs = logit_vec.log_softmax(-1)
-    # Remove passing
-    log_probs = log_probs[1:]
-    assert len(log_probs)==60
-    
-    temp_board_state = t.zeros(64, device=logit_vec.device)
-    # Set all cells to -15 by default, for a very negative log prob - this means the middle cells don't show up as mattering
-    temp_board_state -= 13.
-    temp_board_state[stoi_indices] = log_probs
-
+# Set all cells to -13 by default, for a very negative log prob - this means the middle cells don't show up as mattering
+temp_board_state = t.zeros((8, 8), dtype=t.float32, device=device) - 13.
+temp_board_state.flatten()[stoi_indices] = log_probs
 ```
+
+<details>
+<summary>Aside - how does this tensor magic work?</summary>
+
+`temp_board_state` is an array of shape `(8, 8)`. When we use `.flatten()`, this returns a **view** (i.e. same underlying data) with shape `(64,)`. When we index it by `stoi_indices` (a list of 60 indices, which is all the indices excluding the "middle squares"), this also returns a view (still the same data). We can then set those 60 elements to be the model's log probs. This will change the values in the original tensor, without changing that tensor's shape.
+</details>
 
 We can now plot this as a board state! We see a crisp distinction from a set of moves that the model clearly thinks are valid (at near uniform probabilities), and a bunch that aren't. Note that by training the model to predict a *uniformly* chosen next move, we incentivise it to be careful about making all valid logits be uniform!
 
@@ -435,10 +455,18 @@ def plot_square_as_board(state, diverging_scale=True, **kwargs):
     imshow(state, **kwargs)
     
 
-if MAIN:
-    plot_square_as_board(temp_board_state.reshape(8, 8), zmax=0, diverging_scale=False, title="Example Log Probs")
-
+plot_square_as_board(temp_board_state.reshape(8, 8), zmax=0, diverging_scale=False, title="Example Log Probs")
 ```
+
+> #### Recap of the useful objects we've defined (1/4)
+> 
+> * **`model` is an 8-layer autoregressive transformer.**
+>     * It has been trained to predict legal Othello moves (all with the same probability).
+>     * It gets fed a sequence of type `int` (i.e. integers from 0 to 60, where 0 represents "pass" (not present in our data) and the other numbers represent the 60 moves, excluding 4 middle squares).
+> * **`board_seqs_int`, `board_seqs_str` are different representations of all 10000 of our games.**
+>     * Both have shape `(num_games=10000, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+
 
 ## Exploring Game Play
 
@@ -461,29 +489,7 @@ Note that we don't see mid green <font color='#92B63A'>▉</font> in the plot be
 
 
 ```python
-
-if MAIN:
-    plot_single_board(int_to_label(moves_int))
-
-```
-
-We also have the `OthelloBoardState` class, which visualises the same thing (although in less detail). It also proves some cool effort-saving functions for us, e.g. the ability to step through a game move by move and get the legal moves at each step (we'll see this later).
-
-
-```python
-
-if MAIN:
-    board = OthelloBoardState()
-    board.update(to_string(moves_int))
-    plot_square_as_board(board.state, title="Example Board State (+1 is Black, -1 is White)")
-
-```
-
-```python
-
-if MAIN:
-    print("Valid moves:", string_to_label(board.get_valid_moves()))
-
+plot_single_board(int_to_label(moves_int))
 ```
 
 ## Making some utilities
@@ -495,12 +501,9 @@ Let's call these the **focus games**.
 
 
 ```python
-
-if MAIN:
-    num_games = 50
-    focus_games_int = board_seqs_int[:num_games]
-    focus_games_string = board_seqs_string[:num_games]
-
+num_games = 50
+focus_games_int = board_seqs_int[:num_games]
+focus_games_string = board_seqs_string[:num_games]
 ```
 
 A big stack of each move's board state and a big stack of the valid moves in each game (one hot encoded to be a nice tensor):
@@ -513,38 +516,66 @@ def one_hot(list_of_ints, num_classes=64):
     return out
 
 
-if MAIN:
-    focus_states = np.zeros((num_games, 60, 8, 8), dtype=np.float32)
-    focus_valid_moves = t.zeros((num_games, 60, 64), dtype=t.float32)
-    
-    for i in (range(num_games)):
-        board = OthelloBoardState()
-        for j in range(60):
-            board.umpire(focus_games_string[i, j].item())
-            focus_states[i, j] = board.state
-            focus_valid_moves[i, j] = one_hot(board.get_valid_moves())
-    
-    print("focus states:", focus_states.shape)
-    print("focus_valid_moves", tuple(focus_valid_moves.shape))
+focus_states = np.zeros((num_games, 60, 8, 8), dtype=np.float32)
+focus_valid_moves = t.zeros((num_games, 60, 64), dtype=t.float32)
 
+for i in (range(num_games)):
+    board = OthelloBoardState()
+    for j in range(60):
+        board.umpire(focus_games_string[i, j].item())
+        focus_states[i, j] = board.state
+        focus_valid_moves[i, j] = one_hot(board.get_valid_moves())
+
+print("focus states:", focus_states.shape)
+print("focus_valid_moves", tuple(focus_valid_moves.shape))
+```
+
+To visualise this, let's plot the first 16 moves of the first game:
+
+
+```python
+imshow(
+    focus_states[0, :16],
+    facet_col=0,
+    facet_col_wrap=8,
+    facet_labels=[f"Move {i}" for i in range(1, 17)],
+    title="First 16 moves of first game",
+    color_continuous_scale="Greys",
+)
 ```
 
 Lastly, a cache of every model activation and the logits:
 
 
 ```python
-
-if MAIN:
-    focus_logits, focus_cache = model.run_with_cache(focus_games_int[:, :-1].to(device))
-
+focus_logits, focus_cache = model.run_with_cache(focus_games_int[:, :-1].to(device))
+focus_logits.shape
 ```
 
-```python
+> #### Recap of the useful objects we've defined (2/4)
+> 
+> Previously:
+> 
+> * **`model` is an 8-layer autoregressive transformer.**
+>     * It has been trained to predict legal Othello moves (all with the same probability).
+>     * It gets fed a sequence of type `int` (i.e. integers from 0 to 60, where 0 represents "pass" (not present in our data) and the other numbers represent the 60 moves, excluding 4 middle squares).
+> * **`board_seqs_int`, `board_seqs_str` are different representations of all 10000 of our games.**
+>     * Both have shape `(num_games=10000, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> 
+> New:
+> 
+> * **`focus_games_int`, `focus_games_str` - different representations of our "focus games".**
+>     * Both have shape `(num_games=50, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> * **`focus_states` tells us what the board state is at any point.**
+>     * It has shape `(num_games=50, num_moves=60, rows=8, cols=8)`, and the entries are 0, 1, -1 (for blank, black, white).
+> * **`focus_valid_moves` tells us which moves are valid.**
+>     * It has shape `(num_games=50, num_moves=60, rows*ncols=64)`, and the entries are 0, 1 (for illegal, legal).
+> * **`focus_logits` and `focus_cache` - results of running our model on a bunch of games.**
+>     * Shape of logits is `(num_games=50, num_moves=59, d_vocab=61)` (59 because we never predict the first move, 61 because we have 60 moves + 1 for pass).
+>     * This gives us 3000 moves in total.
 
-if MAIN:
-    focus_logits.shape
-
-```
 
 ## Using the probe
 
@@ -574,43 +605,37 @@ This means that the options we want in our `linear_probe` are "empty", "theirs" 
 
 
 ```python
+full_linear_probe = t.load(OTHELLO_MECHINT_ROOT / "main_linear_probe.pth")
 
-if MAIN:
-    full_linear_probe = t.load(OTHELLO_ROOT / "main_linear_probe.pth")
-    
-    rows = 8
-    cols = 8 
-    options = 3
-    assert full_linear_probe.shape == (3, cfg.d_model, rows, cols, options)
-
+rows = 8
+cols = 8 
+options = 3
+assert full_linear_probe.shape == (3, cfg.d_model, rows, cols, options)
 ```
 
 ```python
+black_to_play_index = 0
+white_to_play_index = 1
+blank_index = 0
+their_index = 1
+my_index = 2
 
-if MAIN:
-    black_to_play_index = 0
-    white_to_play_index = 1
-    blank_index = 0
-    their_index = 1
-    my_index = 2
-    
-    # Creating values for linear probe (converting the "black/white to play" notation into "me/them to play")
-    linear_probe = t.zeros(cfg.d_model, rows, cols, options, device=device)
-    linear_probe[..., blank_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 0] + full_linear_probe[white_to_play_index, ..., 0])
-    linear_probe[..., their_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 1] + full_linear_probe[white_to_play_index, ..., 2])
-    linear_probe[..., my_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 2] + full_linear_probe[white_to_play_index, ..., 1])
-
+# Creating values for linear probe (converting the "black/white to play" notation into "me/them to play")
+linear_probe = t.zeros(cfg.d_model, rows, cols, options, device=device)
+linear_probe[..., blank_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 0] + full_linear_probe[white_to_play_index, ..., 0])
+linear_probe[..., their_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 1] + full_linear_probe[white_to_play_index, ..., 2])
+linear_probe[..., my_index] = 0.5 * (full_linear_probe[black_to_play_index, ..., 2] + full_linear_probe[white_to_play_index, ..., 1])
 ```
 
 On move 29 in game 0, we can apply the probe to the model's residual stream after layer 6. Move 29 is black to play.
 
+Let's see what the probe thinks about the board state, and compare this to the actual board state:
+
 
 ```python
-
-if MAIN:
-    layer = 6
-    game_index = 0
-    move = 29
+layer = 6
+game_index = 0
+move = 29
     
 def plot_probe_outputs(layer, game_index, move, **kwargs):
     residual_stream = focus_cache["resid_post", layer][game_index, move]
@@ -619,52 +644,44 @@ def plot_probe_outputs(layer, game_index, move, **kwargs):
     probabilities = probe_out.softmax(dim=-1)
     plot_square_as_board(probabilities, facet_col=2, facet_labels=["P(Empty)", "P(Their's)", "P(Mine)"], **kwargs)
 
-
-if MAIN:
-    plot_probe_outputs(layer, game_index, move, title="Example probe outputs after move 29 (black to play)")
     
-    plot_single_board(int_to_label(focus_games_int[game_index, :move+1]))
-
+plot_probe_outputs(layer, game_index, move, title="Example probe outputs after move 29 (black to play)")
+    
+plot_single_board(int_to_label(focus_games_int[game_index, :move+1]))
 ```
 
 I got the best results intervening after layer 4, but interestingly here the model has *almost* figured out the board state by then, but is missing the fact that C5 and C6 are black and is confident that they're white. My guess is that the board state calculation circuits haven't quite finished and are doing some iterative reasoning - if those cells have been taken several times, maybe it needs a layer to track the next earliest time it was taken? I don't know, and figuring this out would be a great starter project if you want to explore!
 
 
 ```python
+layer = 4
+game_index = 0
+move = 29
 
-if MAIN:
-    layer = 4
-    game_index = 0
-    move = 29
-    
-    plot_probe_outputs(layer, game_index, move, title="Example probe outputs at layer 4 after move 29 (black to play)")
-
+plot_probe_outputs(layer, game_index, move, title="Example probe outputs at layer 4 after move 29 (black to play)")
 ```
 
 Now let's take one step forward - we should see that the representations totally flip. This is indeed what we find.
 
-Also, notice that the model gets the corner wrong in this case (incorrectly thinking that the corner is white rather than empty) - it's not a big deal, but interesting!
-
 
 ```python
+layer = 4
+game_index = 0
+move = 30
 
-if MAIN:
-    layer = 4
-    game_index = 0
-    move = 30
-    
-    plot_probe_outputs(layer, game_index, move, title="Example probe outputs at layer 4 after move 30 (white to play)")
-    
-    plot_single_board(focus_games_string[game_index, :31])
+plot_probe_outputs(layer, game_index, move, title="Example probe outputs at layer 4 after move 30 (white to play)")
 
+plot_single_board(focus_games_string[game_index, :31])
 ```
 
-Fascinatingly, the white to play probe gets the corner right! Can you guess why this might be the case?
+Notice that the model gets the corner wrong in this case (incorrectly thinking that the corner is white rather than empty) - it's not a big deal, but interesting!
+
+Can you think of a reason why corners might be treated differently in this model?
 
 <details>
 <summary>Hint</summary>
 
-One possible reason is to do with the rules of Othello, and how the corners have a special significance.
+One possible reason is to do with the rules of Othello, and how the corners have a special significance. What happens to a piece once it's placed in the corner?
 
 </details>
 
@@ -675,6 +692,40 @@ A fact about Othello is that a piece in the corners can never be flanked and thu
 
 Trying to locate this circuit might be a fun bonus exercise!
 </details>
+
+
+> #### Recap of the useful objects we've defined (3/4)
+> 
+> Previously:
+> 
+> * **`model` is an 8-layer autoregressive transformer.**
+>     * It has been trained to predict legal Othello moves (all with the same probability).
+>     * It gets fed a sequence of type `int` (i.e. integers from 0 to 60, where 0 represents "pass" (not present in our data) and the other numbers represent the 60 moves, excluding 4 middle squares).
+> * **`board_seqs_int`, `board_seqs_str` are different representations of all 10000 of our games.**
+>     * Both have shape `(num_games=10000, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> * **`focus_games_int`, `focus_games_str` - different representations of our "focus games".**
+>     * Both have shape `(num_games=50, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> * **`focus_states` tells us what the board state is at any point.**
+>     * It has shape `(num_games=50, num_moves=60, rows=8, cols=8)`, and the entries are 0, 1, -1 (for blank, black, white).
+> * **`focus_valid_moves` tells us which moves are valid.**
+>     * It has shape `(num_games=50, num_moves=60, rows*ncols=64)`, and the entries are 0, 1 (for illegal, legal).
+> * **`focus_logits` and `focus_cache` - results of running our model on a bunch of games.**
+>     * Shape of logits is `(num_games=50, num_moves=59, d_vocab=61)` (59 because we never predict the first move, 61 because we have 60 moves + 1 for pass).
+>     * This gives us 3000 moves in total.
+> 
+> New:
+> 
+> * **`full_linear_probe` - tensor containing all the directions found by the trained probe**
+>     * Has shape `(mode=3, d_model=512, row=8, col=8, options=3)`.
+>         * `mode` refers to the mode in which the probe was trained: "odd moves / black to play", "even moves / white to play", and all moves.
+>         * `options` refers to the three directions: "blank", "theirs", "mine".
+>     * In other words, the inner product of `linear_probe[-1]` along its first dimension with the residual stream at some position gives us a tensor of shape `(rows=8, cols=8, options=3)` representing the probe's estimate for the model's logprobs for the options "blank", "black", "white" respectively.
+> * **`linear_probe` - same as above, except:**
+>     * It only has one mode ("odd move / black to play")
+>         * So shape is `(d_model=512, row=8, col=8, options=3)`.
+>     * Options are "blank", "theirs", "mine" respectively (because this turns out to be how the model actually thinks about the game).
 
 
 ### Computing Accuracy
@@ -708,31 +759,26 @@ def state_stack_to_one_hot(state_stack):
 
 # We first convert the board states to be in terms of my (+1) and their (-1), rather than black and white
 
-if MAIN:
-    alternating = np.array([-1 if i%2 == 0 else 1 for i in range(focus_games_int.shape[1])])
-    flipped_focus_states = focus_states * alternating[None, :, None, None]
-    
-    # We now convert to one-hot encoded vectors
-    focus_states_flipped_one_hot = state_stack_to_one_hot(t.tensor(flipped_focus_states))
-    
-    # Take the argmax (i.e. the index of option empty/their/mine)
-    focus_states_flipped_value = focus_states_flipped_one_hot.argmax(dim=-1)
+alternating = np.array([-1 if i%2 == 0 else 1 for i in range(focus_games_int.shape[1])])
+flipped_focus_states = focus_states * alternating[None, :, None, None]
 
+# We now convert to one-hot encoded vectors
+focus_states_flipped_one_hot = state_stack_to_one_hot(t.tensor(flipped_focus_states))
+
+# Take the argmax (i.e. the index of option empty/their/mine)
+focus_states_flipped_value = focus_states_flipped_one_hot.argmax(dim=-1)
 ```
 
 Now we apply the probe to the residual stream at layer 6 (which involves taking a batch of dot products of `d_model`-length vectors):
 
 
 ```python
+probe_out = einops.einsum(
+    focus_cache["resid_post", 6], linear_probe,
+    "game move d_model, d_model row col options -> game move row col options"
+)
 
-if MAIN:
-    probe_out = einops.einsum(
-        focus_cache["resid_post", 6], linear_probe,
-        "game move d_model, d_model row col options -> game move row col options"
-    )
-    
-    probe_out_value = probe_out.argmax(dim=-1)
-
+probe_out_value = probe_out.argmax(dim=-1)
 ```
 
 The `probe_out_value` tensor tells us what the probe's prediction is for each `(game, move, row, col)`.
@@ -741,31 +787,73 @@ We can now compare this to the ground truth which we calculated in the previous 
 
 
 ```python
+correct_middle_odd_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5:2]
+accuracies_odd = einops.reduce(correct_middle_odd_answers.float(), "game move row col -> row col", "mean")
 
-if MAIN:
-    correct_middle_odd_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5:2]
-    accuracies_odd = einops.reduce(correct_middle_odd_answers.float(), "game move row col -> row col", "mean")
-    
-    correct_middle_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5]
-    accuracies = einops.reduce(correct_middle_answers.float(), "game move row col -> row col", "mean")
-    
-    plot_square_as_board(
-        1 - t.stack([accuracies_odd, accuracies], dim=0), 
-        title="Average Error Rate of Linear Probe", 
-        facet_col=0, facet_labels=["Black to Play moves", "All Moves"], 
-        zmax=0.25, zmin=-0.25
-    )
+correct_middle_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5]
+accuracies = einops.reduce(correct_middle_answers.float(), "game move row col -> row col", "mean")
 
+plot_square_as_board(
+    1 - t.stack([accuracies_odd, accuracies], dim=0),
+    title="Average Error Rate of Linear Probe", 
+    facet_col=0, facet_labels=["Black to Play moves", "All Moves"], 
+    zmax=0.25, zmin=-0.25
+)
 ```
 
 Note that we can see the probe is worse near corners, as we anecdotally observed.
+
+
+### Exercise - calculate probe cosine similarities
+
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠🟠⚪⚪
+
+You should spend up to 10-20 minutes on this exercise.
+```
+
+As another nice way of visualising how the "black to play" and "white to play" probes are similar, we can calculate the cosine similarity between each of the embedding vectors for both odd and even modes.
+
+Try and replicate Neel's plot, which you can find at [this link](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/nmxzr2zsjNtjaHh7x/cuxy4pf353wazoq5emmn). You can see in this plot that the cosine similarities for the probe directions at odd and even moves are close to -1 (indicating that the probes are finding the right directions).
+
+Remember, `full_linear_probe` has shape `(modes=3, d_model=512, rows=8, cols=8, options=3)`. The modes are black to play (odd) / white to play (even) / all, and the options are blank / black / white respectively. The plot we're trying to replicate has the cosine similarity of the probe direction at every square in the board, for odd and even modes (denoted with `(O)` and `(E)` in the reference plot).
+
+
+```python
+# YOUR CODE HERE - define the `cosine_similarities` tensor, to be plotted
+
+imshow(
+    cosine_similarities,
+    title="Cosine Sim of B-W Linear Probe Directions by Cell",
+    x=[f"{L} (O)" for L in full_board_labels] + [f"{L} (E)" for L in full_board_labels],
+    y=[f"{L} (O)" for L in full_board_labels] + [f"{L} (E)" for L in full_board_labels],
+)
+```
+
+<details>
+<summary>Solution</summary>
+
+
+```python
+odd_BminusW_probe = full_linear_probe[0, ..., 1] - full_linear_probe[0, ..., 2]
+even_BminusW_probe = full_linear_probe[1, ..., 1] - full_linear_probe[1, ..., 2]
+both_probs = einops.rearrange(
+    t.stack([odd_BminusW_probe, even_BminusW_probe], dim=0),
+    "modes d_model rows cols -> (modes rows cols) d_model"
+both_probs /= both_probs.norm(dim=-1, keepdim=True)
+cosine_similarities = einops.einsum(
+    both_probs, both_probs,
+    "square_y d_model, square_x d_model -> square_y square_x",
+
+```
+</details>
 
 
 ## Intervening with the probe
 
 
 One of the really exciting consequences of a linear probe is that it gives us a set of interpretable directions in the residual stream! And with this, we can not only interpret the model's representations, but we can also intervene in the model's reasoning. This is a good proof of concept that if you can *really* understand a model, you can get precise and detailed control over its behaviour.
-
 
 The first step is to convert our probe to meaningful directions. Each square's probe has 3 vectors, but the logits go into a softmax, which is translation invariant, so this only has two degrees of freedom. A natural-ish way to convert it into two vectors is taking `blank - (mine + theirs)/2` giving a "is this cell empty or not" direction and `mine - theirs` giving a "conditional on being blank, is this my colour vs their's" direction.
 
@@ -789,6 +877,15 @@ Having a single meaningful direction is important, because it allows us to inter
 
 ### Exercise - define your probe directions
 
+```c
+Difficulty: 🟠🟠⚪⚪⚪
+Importance: 🟠🟠🟠🟠⚪
+
+You should spend up to 5-10 minutes on this exercise.
+
+The exercise isn't conceptually hard, understanding what the objects in question represent is the important part.
+```
+
 
 Define the tensors `blank_probe` and `my_prob`, which point in the two directions given above.
 
@@ -797,13 +894,20 @@ You should define these tensors from the `linear_probe` tensor (recall that this
 
 ```python
 # YOUR CODE HERE - define `blank_probe` and `my_probe`
-import part6_othellogpt.tests as tests
+tests.test_my_probes(blank_probe, my_probe, linear_probe)
+```
+
+<details>
+<summary>Solution</summary>
 
 
-if MAIN:
-    tests.test_my_probes(blank_probe, my_probe, linear_probe)
+```python
+blank_probe = linear_probe[..., 0] - linear_probe[..., 1] * 0.5 - linear_probe[..., 2] * 0.5
+my_probe = linear_probe[..., 2] - linear_probe[..., 1]
 
 ```
+</details>
+
 
 Now that we've got our probe working, let's see it in action!
 
@@ -811,17 +915,17 @@ We'll take the 20th move in the 0th game as our example:
 
 
 ```python
+pos = 20
+game_index = 0
 
-if MAIN:
-    pos = 20
-    game_index = 0
-    
-    moves = focus_games_string[game_index, :pos+1]
-    plot_single_board(moves)
-    
-    state = t.zeros((64,), dtype=t.float32, device=device) - 10.
-    state[stoi_indices] = focus_logits[game_index, pos].log_softmax(dim=-1)[1:]
+# Plot board state
+moves = focus_games_string[game_index, :pos+1]
+plot_single_board(moves)
 
+# Plot corresponding model predictions
+state = t.zeros((8, 8), dtype=t.float32, device=device) - 13.
+state.flatten()[stoi_indices] = focus_logits[game_index, pos].log_softmax(dim=-1)[1:]
+plot_square_as_board(state, zmax=0, diverging_scale=False, title="Log probs")
 ```
 
 Now, how does the game state (i.e. which moves are legal for white) change when `F4` is flipped from black to white?
@@ -842,29 +946,26 @@ One move becomes legal, one becomes illegal.
 
 </details>
 
-Let's verify this:
+Let's verify this, using the `OthelloBoardState` class:
 
 
 ```python
+cell_r = 5
+cell_c = 4
+print(f"Flipping the color of cell {'ABCDEFGH'[cell_r]}{cell_c}")
 
-if MAIN:
-    cell_r = 5
-    cell_c = 4
-    print(f"Flipping the color of cell {'ABCDEFGH'[cell_r]}{cell_c}")
-    
-    board = OthelloBoardState()
-    board.update(moves.tolist())
-    board_state = board.state.copy()
-    valid_moves = board.get_valid_moves()
-    flipped_board = copy.deepcopy(board)
-    flipped_board.state[cell_r, cell_c] *= -1
-    flipped_valid_moves = flipped_board.get_valid_moves()
-    
-    newly_legal = [string_to_label(move) for move in flipped_valid_moves if move not in valid_moves]
-    newly_illegal = [string_to_label(move) for move in valid_moves if move not in flipped_valid_moves]
-    print("newly_legal", newly_legal)
-    print("newly_illegal", newly_illegal)
+board = OthelloBoardState()
+board.update(moves.tolist())
+board_state = board.state.copy()
+valid_moves = board.get_valid_moves()
+flipped_board = copy.deepcopy(board)
+flipped_board.state[cell_r, cell_c] *= -1
+flipped_valid_moves = flipped_board.get_valid_moves()
 
+newly_legal = [string_to_label(move) for move in flipped_valid_moves if move not in valid_moves]
+newly_illegal = [string_to_label(move) for move in valid_moves if move not in flipped_valid_moves]
+print("newly_legal", newly_legal)
+print("newly_illegal", newly_illegal)
 ```
 
 We can now intervene on the model's residual stream using the "my colour vs their colour" direction. I get the best results intervening after layer 4. This is a **linear intervention** - we are just changing a single dimension of the residual stream and keeping the others unchanged. This is a fairly simple intervention, and it's striking that it works!
@@ -874,18 +975,25 @@ I apply the fairly janky technique of taking current coordinate in the given dir
 
 ### Exercise - define the `apply_scale` function
 
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠🟠⚪⚪
+
+You should spend up to 10-20 minutes on this exercise.
+```
+
 Define a function which will take in the residual stream value and the associated hook point as arguments, and return a modified version of the residual stream, in the way described above.
 
 To be clear, if we define $\vec{v}$ as the probe's flip direction for a given square (called `flip_dir` below), then we can write our residual stream (at `pos=20`, which is the one we're interested in) as the vector:
 
 $$
-\text{resid}_{20} = \alpha \cdot \vec{v} + \beta \cdot \vec{w}
+\text{resid}_{20} = \alpha \times \vec{v} + \beta \times \vec{w}
 $$
 
 where $\vec{w}$ is some vector orthogonal to $v$. We want to alter the residual stream at this position to be:
 
 $$
-\text{resid}_{20} = - \text{ scale} \cdot \alpha \cdot \vec{v} + \beta \cdot \vec{w}
+\text{resid}_{20} = - \text{ scale} \times \alpha \times \vec{v} + \beta \times \vec{w}
 $$
 
 Remember to normalize vector $\vec{v}$!
@@ -897,36 +1005,47 @@ def apply_scale(resid: Float[Tensor, "batch=1 seq d_model"], flip_dir: Float[Ten
     Returns a version of the residual stream, modified by the amount `scale` in the 
     direction `flip_dir` at the sequence position `pos`, in the way described above.
     '''
+    pass
+
+
+tests.test_apply_scale(apply_scale)
+```
+
+<details>
+<summary>Solution</summary>
+
+
+```python
+def apply_scale(resid: Float[Tensor, "batch=1 seq d_model"], flip_dir: Float[Tensor, "d_model"], scale: int, pos: int):
+    '''
+    Returns a version of the residual stream, modified by the amount `scale` in the 
+    direction `flip_dir` at the sequence position `pos`, in the way described above.
+    '''
+    # SOLUTION
     flip_dir_normed = flip_dir / flip_dir.norm()
 
     alpha = resid[0, pos] @ flip_dir_normed
     resid[0, pos] -= (scale+1) * alpha * flip_dir_normed
 
     return resid
-
-
-
-if MAIN:
-    tests.test_apply_scale(apply_scale)
-
 ```
+</details>
+
 
 Now, you can run the code below to see the output of your interventions. You should see that the model's prediction changes from `F4` to `D2`!
 
 
 ```python
+flip_dir = my_probe[:, cell_r, cell_c]
 
-if MAIN:
-    flip_dir = my_probe[:, cell_r, cell_c]
-    
-    big_flipped_states_list = []
-    layer = 4
-    scales = [0, 1, 2, 4, 8, 16]
-    
-    # Iterate through scales, generate a new facet plot for each possible scale
-    for scale in scales:
-    
-        # Hook function which will perform flipping in the "F4 flip direction"
+big_flipped_states_list = []
+layer = 4
+scales = [0, 1, 2, 4, 8, 16]
+
+# Iterate through scales, generate a new facet plot for each possible scale
+for scale in scales:
+
+    # Hook function which will perform flipping in the "F4 flip direction"
     def flip_hook(resid: Float[Tensor, "batch=1 seq d_model"], hook: HookPoint):
         return apply_scale(resid, flip_dir, scale, pos)
 
@@ -944,28 +1063,79 @@ if MAIN:
     big_flipped_states_list.append(flip_state)
 
 
-if MAIN:
-    flip_state_big = t.stack(big_flipped_states_list)
-    state_big = einops.repeat(state, "d -> b d", b=6)
-    color = t.zeros((len(scales), 64)).cuda() + 0.2
-    for s in newly_legal:
-        color[:, to_string(s)] = 1
-    for s in newly_illegal:
-        color[:, to_string(s)] = -1
-    
-    scatter(
-        y=state_big, 
-        x=flip_state_big, 
-        title=f"Original vs Flipped {string_to_label(8*cell_r+cell_c)} at Layer {layer}", 
-        xaxis="Flipped", yaxis="Original", 
-        hover=[f"{r}{c}" for r in "ABCDEFGH" for c in range(8)], 
-        facet_col=0, facet_labels=[f"Translate by {i}x" for i in scales], 
-        color=color, color_name="Newly Legal", color_continuous_scale="Geyser"
-    )
+flip_state_big = t.stack(big_flipped_states_list)
+state_big = einops.repeat(state.flatten(), "d -> b d", b=6)
+color = t.zeros((len(scales), 64)).cuda() + 0.2
+for s in newly_legal:
+    color[:, to_string(s)] = 1
+for s in newly_illegal:
+    color[:, to_string(s)] = -1
 
+scatter(
+    y=state_big, 
+    x=flip_state_big, 
+    title=f"Original vs Flipped {string_to_label(8*cell_r+cell_c)} at Layer {layer}", 
+    # labels={"x": "Flipped", "y": "Original"}, 
+    xaxis="Flipped", 
+    yaxis="Original", 
+    
+    hover=[f"{r}{c}" for r in "ABCDEFGH" for c in range(8)], 
+    facet_col=0, facet_labels=[f"Translate by {i}x" for i in scales], 
+    color=color, color_name="Newly Legal", color_continuous_scale="Geyser"
+)
 ```
 
-We can see that there is a significant effect on the model's predictions at `D2` and `G4`, long before the model's predictions at other squares get messed up. This is evidence that our causal intervention is valid, i.e. the direction found by our linear probe `my_probe` does in some sense represent the model's `theirs - mine` direction, and this direction is used by the model downstream.
+<details>
+<summary>Help - I'm still confused about this figure / this methodology.</summary>
+
+When we mean "translating by `Nx`" for a scalar `N`, we mean "taking the component `x` of the residual stream in the `theirs - mine` probe direction for the F4 square, and replacing it with `Nx`. 
+
+The scatter plots compare `-1x` (original) to `Nx` (flipped) for different values of `x`. For instance, the first facet plot shows what happens when the residual stream's component in the probe direction is erased.
+
+The fact that we see the model's predictions for `G4` and `D2` change (with `G4` "becoming more illegal" and `D2` "becoming more legal") as our scale factor increases (without significant change in the predictions for other squares, at first) is evidence that our caual intervention is valid. In other words, the direction found by our linear probe `my_probe` does in some sense represent the model's `theirs - mine` direction, and this direction is used by the model downstream.
+</details>
+
+
+> #### Recap of the useful objects we've defined (4/4)
+> 
+> Previously:
+> 
+> * **`model` is an 8-layer autoregressive transformer.**
+>     * It has been trained to predict legal Othello moves (all with the same probability).
+>     * It gets fed a sequence of type `int` (i.e. integers from 0 to 60, where 0 represents "pass" (not present in our data) and the other numbers represent the 60 moves, excluding 4 middle squares).
+> * **`board_seqs_int`, `board_seqs_str` are different representations of all 10000 of our games.**
+>     * Both have shape `(num_games=10000, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> * **`focus_games_int`, `focus_games_str` - different representations of our "focus games".**
+>     * Both have shape `(num_games=50, num_moves=60)`.
+>     * The former has labels from 1 to 60, the latter from 0 to 63 excluding the middle squares.
+> * **`focus_states` tells us what the board state is at any point.**
+>     * It has shape `(num_games=50, num_moves=60, rows=8, cols=8)`, and the entries are 0, 1, -1 (for blank, black, white).
+> * **`focus_valid_moves` tells us which moves are valid.**
+>     * It has shape `(num_games=50, num_moves=60, rows*ncols=64)`, and the entries are 0, 1 (for illegal, legal).
+> * **`focus_logits` and `focus_cache` - results of running our model on a bunch of games.**
+>     * Shape of logits is `(num_games=50, num_moves=59, d_vocab=61)` (59 because we never predict the first move, 61 because we have 60 moves + 1 for pass).
+>     * This gives us 3000 moves in total.
+> * **`full_linear_probe` - tensor containing all the directions found by the trained probe**
+>     * Has shape `(mode=3, d_model=512, row=8, col=8, options=3)`.
+>         * `mode` refers to the mode in which the probe was trained: "odd moves / black to play", "even moves / white to play", and all moves.
+>         * `options` refers to the three directions: "blank", "theirs", "mine".
+>     * In other words, the inner product of `linear_probe[-1]` along its first dimension with the residual stream at some position gives us a tensor of shape `(rows=8, cols=8, options=3)` representing the probe's estimate for the model's logprobs for the options "blank", "black", "white" respectively.
+> * **`linear_probe` - same as above, except:**
+>     * It only has one mode ("odd move / black to play")
+>         * So shape is `(d_model=512, row=8, col=8, options=3)`.
+>     * Options are "blank", "theirs", "mine" respectively (because this turns out to be how the model actually thinks about the game).
+>
+> New:
+> 
+> * **`blank_probe` and `my_probe` - tensors containing the important relative directions we care about in our analysis.**
+>     * They were both created from linear combinations of the different **options** of `linear_probe`
+>     * They both have shape `(d_model=512, row=8, col=8)`
+>     * `blank_probe` represents the "blank direction" (which is `blank - 0.5 * theirs - 0.5 * mine`).
+>     * `my_probe` represents the "mine - theirs direction" (which is `mine - theirs`).
+>     * We can project residual stream vectors along these directions to get meaningful quantities (the model's "relative blank logprob", and "relative mine vs theirs logprob").
+> * **`OthelloBoardState` is a class which is useful for creating board states over time.**
+>     * You don't need to know how to use it; the code will always be given to you.
 
 
 
@@ -973,7 +1143,7 @@ We can see that there is a significant effect on the model's predictions at `D2`
 """, unsafe_allow_html=True)
 
 
-def section_1():
+def section_2():
 
     st.sidebar.markdown(r"""
 
@@ -982,19 +1152,22 @@ def section_1():
 <ul class="contents">
     <li class='margtop'><a class='contents-el' href='#probing-across-layers'>Probing Across Layers</a></li>
     <li><ul class="contents">
-        <li><a class='contents-el' href='#exercise-plot-attn-and-mlp-contributions'><b>Exercise</b> - plot attn and mlp contributions</a></li>
+        <li><a class='contents-el' href='#exercise-compute-attn-and-mlp-contributions'><b>Exercise</b> - compute attn and mlp contributions</a></li>
         <li><a class='contents-el' href='#exercise-repeat-this-for-the-"blank"-probe'><b>Exercise</b> - repeat this for the "blank" probe</a></li>
     </ul></li>
     <li class='margtop'><a class='contents-el' href='#reading-off-neuron-weights'>Reading off neuron weights</a></li>
     <li><ul class="contents">
         <li><a class='contents-el' href='#exercise-calculate-neuron-input-weights'><b>Exercise</b> - calculate neuron input weights</a></li>
-        <li><a class='contents-el' href='#note-to-self-i-don't-understand-this-bit'>note to self - I don't understand this bit</a></li>
+        <li><a class='contents-el' href='#how-much-variance-does-the-probe-explain'>How much variance does the probe explain?</a></li>
+        <li><a class='contents-el' href='#more-neurons'>More Neurons</a></li>
+        <li><a class='contents-el' href='#recap-of-this-section'>Recap of this section</a></li>
     </ul></li>
     <li class='margtop'><a class='contents-el' href='#activation-patching'>Activation Patching</a></li>
     <li><ul class="contents">
         <li><a class='contents-el' href='#setting-up-our-patching'>Setting up our patching</a></li>
         <li><a class='contents-el' href='#exercise-create-a-patching-metric'><b>Exercise</b> - create a patching metric</a></li>
         <li><a class='contents-el' href='#exercise-write-a-patching-function'><b>Exercise</b> - write a patching function</a></li>
+        <li><a class='contents-el' href='#recap-of-this-section'>Recap of this section</a></li>
 </ul></li>""", unsafe_allow_html=True)
 
     st.markdown(r"""
@@ -1018,22 +1191,27 @@ Let's analyse move 20 in game 1, where we can see that the probe has perfect acc
 
 
 ```python
+game_index = 1
+move = 20
+layer = 6
 
-if MAIN:
-    game_index = 1
-    move = 20
-    layer = 6
-    
-    plot_single_board(focus_games_string[game_index, :move+1])
-    plot_probe_outputs(layer, game_index, move)
-
+plot_single_board(focus_games_string[game_index, :move+1])
+plot_probe_outputs(layer, game_index, move)
 ```
 
 We now plot the contributions of the attention and MLP layers to the `my_probe` direction. Strikingly, we see that the MLP layers are important for the vertical stripe that we just taken by the opponent, but that most of the rest seems to be done by the attention layers. 
 
 
-### Exercise - plot attn and mlp contributions
+### Exercise - compute attn and mlp contributions
 
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠🟠🟠⚪
+
+You should spend up to 10-20 minutes on this exercise.
+
+This is an important exercise to be able to do - logit attribution is one of the most important tools in the interpretability toolbox.
+```
 
 Below, you should define `attn_contributions` and `mlp_contributions`. You should do this by taking the batched dot product of the vectors *written* to the residual stream in each layer (from layer `0` to layer `layer` inclusive), and the probe direction "my vs their" which you computed earlier (i.e. `my_probe`).
 
@@ -1043,6 +1221,14 @@ Note, we're looking for the marginal contribution to the probe direction from ea
 <summary>Hint - what activation names to use?</summary>
 
 You should be using `attn_out` and `mlp_out`.
+
+Calculating each of these two contributions will require taking an `einsum` with the activations and your probe.
+</details>
+
+<details>
+<summary>Hint - what dimensions to multiply over?</summary>
+
+`my_probe` has shape `(d_model=512, rows=8, cols=8)`. You should multiply the residual stream at a given layer and `my_probe` over the `d_model` dimension (since your probe represents directions in the residual stream). Your output (for a given game index and move) will have shape `(rows=8, cols=8)`, and will represent the amount by which that component of your model writes to the residual stream in the probe directions.
 </details>
 
 
@@ -1052,11 +1238,11 @@ def plot_contributions(contributions, component: str):
         contributions,
         facet_col=0,
         y=list("ABCDEFGH"),
-        facet_name="Layer",
+        facet_labels=[f"Layer {i}" for i in range(7)],
         title=f"{component} Layer Contributions to my vs their (Game {game_index} Move {move})",
         aspect="equal",
-        width=1300,
-        height=320
+        width=1400,
+        height=350
     )
 
 def calculate_attn_and_mlp_probe_score_contributions(
@@ -1070,13 +1256,44 @@ def calculate_attn_and_mlp_probe_score_contributions(
     pass
 
 
-if MAIN:
-    attn_contributions, mlp_contributions = calculate_attn_and_mlp_probe_score_contributions(focus_cache, my_probe, layer, game_index, move)
-    
-    plot_contributions(attn_contributions, "Attention")
-    plot_contributions(mlp_contributions, "MLP")
+attn_contributions, mlp_contributions = calculate_attn_and_mlp_probe_score_contributions(focus_cache, my_probe, layer, game_index, move)
 
+plot_contributions(attn_contributions, "Attention")
+plot_contributions(mlp_contributions, "MLP")
 ```
+
+<details>
+<summary>Solution</summary>
+
+
+```python
+def calculate_attn_and_mlp_probe_score_contributions(
+    focus_cache: ActivationCache, 
+    my_probe: Float[Tensor, "d_model rows cols"],
+    layer: int,
+    game_index: int, 
+    move: int
+) -> Tuple[Float[Tensor, "layers rows cols"], Float[Tensor, "layers rows cols"]]:
+    
+    # SOLUTION
+    attn_contributions = t.stack([    
+        einops.einsum(
+            focus_cache["attn_out", l][game_index, move], my_probe, 
+            "d_model, d_model rows cols -> rows cols",
+        )
+        for l in range(layer+1)
+    ])
+    mlp_contributions = t.stack([
+        einops.einsum(
+            focus_cache["mlp_out", l][game_index, move], my_probe, 
+            "d_model, d_model rows cols -> rows cols",
+        )
+        for l in range(layer+1)])
+
+    return (attn_contributions, mlp_contributions)
+```
+</details>
+
 
 Next, you should plot overall probe scores (i.e. from the accumulated residual stream by the end of layer `layer`). This should mostly be a copy-and-paste job from above (but with a different activation name).
 
@@ -1093,19 +1310,44 @@ def calculate_accumulated_probe_score(
     pass
 
 
-if MAIN:
-    overall_contribution = calculate_accumulated_probe_score(focus_cache, my_probe, layer, game_index, move)
-    
-    imshow(
-        overall_contribution, 
-        title=f"Overall Probe Score after Layer {layer} for<br>my vs their (Game {game_index} Move {move})",
-        width=380, 
-        height=380
-    )
+overall_contribution = calculate_accumulated_probe_score(focus_cache, my_probe, layer, game_index, move)
 
+imshow(
+    overall_contribution, 
+    title=f"Overall Probe Score after Layer {layer} for<br>my vs their (Game {game_index} Move {move})",
+)
 ```
 
+<details>
+<summary>Solution</summary>
+
+
+```python
+def calculate_accumulated_probe_score(
+    focus_cache: ActivationCache, 
+    my_probe: Float[Tensor, "d_model rows cols"],
+    layer: int,
+    game_index: int, 
+    move: int
+) -> Float[Tensor, "rows cols"]:
+    
+    # SOLUTION
+    return einops.einsum(
+        focus_cache["resid_post", layer][game_index, move], my_probe, 
+        "d_model, d_model rows cols -> rows cols",
+    )
+```
+</details>
+
+
 ### Exercise - repeat this for the "blank" probe
+
+```c
+Difficulty: 🟠⚪⚪⚪⚪
+Importance: 🟠🟠🟠⚪⚪
+
+This just involves copying code and changing the probe name!
+```
 
 Make exactly the same plots, but using `blank_probe` instead of `my_probe`. What do you notice, and why?
 
@@ -1128,16 +1370,20 @@ Firstly, we'll compute the normalized version of the probes (normalization happe
 
 ```python
 # Scale the probes down to be unit norm per cell
-
-if MAIN:
-    blank_probe_normalised = blank_probe / blank_probe.norm(dim=0, keepdim=True)
-    my_probe_normalised = my_probe / my_probe.norm(dim=0, keepdim=True)
-    # Set the center blank probes to 0, since they're never blank so the probe is meaningless
-    blank_probe_normalised[:, [3, 3, 4, 4], [3, 4, 3, 4]] = 0.
-
+blank_probe_normalised = blank_probe / blank_probe.norm(dim=0, keepdim=True)
+my_probe_normalised = my_probe / my_probe.norm(dim=0, keepdim=True)
+# Set the center blank probes to 0, since they're never blank so the probe is meaningless
+blank_probe_normalised[:, [3, 3, 4, 4], [3, 4, 3, 4]] = 0.
 ```
 
 ### Exercise - calculate neuron input weights
+
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠🟠🟠⚪
+
+You shouldn't spend more than 10-25 minutes on this exercise.
+```
 
 The function `calculate_neuron_input_weights` below takes `layer` and `neuron`. It should return a tensor of shape `(row, col)`, where the `[i, j]`-th entry is the projection of this neuron's input weights onto the probe direction corresponding to the `i, j`-th cell in the board.
 
@@ -1169,11 +1415,12 @@ def get_w_in(
     normalize: bool = False,
 ) -> Float[Tensor, "d_model"]:
     '''
-    Returns the input weights for the neuron in the list, at each square on the board.
+    Returns the input weights for the given neuron.
 
     If normalize is True, the weights are normalized to unit norm.
     '''
     pass
+
 
 def get_w_out(
     model: HookedTransformer,
@@ -1182,9 +1429,12 @@ def get_w_out(
     normalize: bool = False,
 ) -> Float[Tensor, "d_model"]:
     '''
-    Returns the input weights for the neuron in the list, at each square on the board.
+    Returns the input weights for the given neuron.
+
+    If normalize is True, the weights are normalized to unit norm.
     '''
     pass
+
 
 def calculate_neuron_input_weights(
     model: HookedTransformer, 
@@ -1193,12 +1443,13 @@ def calculate_neuron_input_weights(
     neuron: int
 ) -> Float[Tensor, "rows cols"]:
     '''
-    Returns tensor of the input weights for each neuron in the list, at each square on the board,
+    Returns tensor of the input weights for the given neuron, at each square on the board,
     projected along the corresponding probe directions.
 
     Assume probe directions are normalized. You should also normalize the model weights.
     '''
     pass
+
 
 def calculate_neuron_output_weights(
     model: HookedTransformer, 
@@ -1207,7 +1458,7 @@ def calculate_neuron_output_weights(
     neuron: int
 ) -> Float[Tensor, "rows cols"]:
     '''
-    Returns tensor of the output weights for each neuron in the list, at each square on the board,
+    Returns tensor of the output weights for the given neuron, at each square on the board,
     projected along the corresponding probe directions.
 
     Assume probe directions are normalized. You should also normalize the model weights.
@@ -1215,31 +1466,108 @@ def calculate_neuron_output_weights(
     pass
 
 
-if MAIN:
-    tests.test_calculate_neuron_input_weights(calculate_neuron_input_weights, model)
-
+tests.test_calculate_neuron_input_weights(calculate_neuron_input_weights, model)
+tests.test_calculate_neuron_output_weights(calculate_neuron_output_weights, model)
 ```
+
+<details>
+<summary>Solution</summary>
+
+
+```python
+def get_w_in(
+    model: HookedTransformer,
+    layer: int,
+    neuron: int,
+    normalize: bool = False,
+) -> Float[Tensor, "d_model"]:
+    '''
+    Returns the input weights for the neuron in the list, at each square on the board.
+
+    If normalize is True, the weights are normalized to unit norm.
+    '''
+    # SOLUTION
+    w_in = model.W_in[layer, :, neuron].detach().clone()
+    if normalize: w_in /= w_in.norm(dim=0, keepdim=True)
+    return w_in
+
+def get_w_out(
+    model: HookedTransformer,
+    layer: int,
+    neuron: int,
+    normalize: bool = False,
+) -> Float[Tensor, "d_model"]:
+    '''
+    Returns the output weights for the neuron in the list, at each square on the board.
+
+    If normalize is True, the weights are normalized to unit norm.
+    '''
+    # SOLUTION
+    w_out = model.W_out[layer, neuron, :].detach().clone()
+    if normalize: w_out /= w_out.norm(dim=0, keepdim=True)
+    return  w_out
+
+def calculate_neuron_input_weights(
+    model: HookedTransformer, 
+    probe: Float[Tensor, "d_model row col"], 
+    layer: int, 
+    neuron: int
+) -> Float[Tensor, "rows cols"]:
+    '''
+    Returns tensor of the input weights for the given neuron, at each square on the board,
+    projected along the corresponding probe directions.
+
+    Assume probe directions are normalized. You should also normalize the model weights.
+    '''
+    # SOLUTION
+    w_in = get_w_in(model, layer, neuron, normalize=True)
+
+    return einops.einsum(
+        w_in, probe,
+        "d_model, d_model row col -> row col",
+    )
+
+def calculate_neuron_output_weights(
+    model: HookedTransformer, 
+    probe: Float[Tensor, "d_model row col"], 
+    layer: int, 
+    neuron: int
+) -> Float[Tensor, "rows cols"]:
+    '''
+    Returns tensor of the output weights for the given neuron, at each square on the board,
+    projected along the corresponding probe directions.
+
+    Assume probe directions are normalized. You should also normalize the model weights.
+    '''
+    # SOLUTION
+    w_out = get_w_out(model, layer, neuron, normalize=True)
+
+    return einops.einsum(
+        w_out, probe,
+        "d_model, d_model row col -> row col",
+    )
+```
+</details>
+
 
 Now, let's examine neuron `1393` in more detail. Can you interpret what it's doing (if you haven't already read this from the post)?
 
 
 ```python
+layer = 5
+neuron = 1393
 
-if MAIN:
-    layer = 5
-    neuron = 1393
-    
-    w_in_L5N1393_my = calculate_neuron_input_weights(model, my_probe_normalised, layer, neuron)
-    w_in_L5N1393_blank = calculate_neuron_input_weights(model, blank_probe_normalised, layer, neuron)
-    
-    imshow(
-        t.stack([w_in_L5N1393_my, w_in_L5N1393_blank]),
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Input weights in terms of the probe for neuron L{layer}N{neuron}",
-        facet_labels=["Blank In", "My In"]
-    )
+w_in_L5N1393_blank = calculate_neuron_input_weights(model, blank_probe_normalised, layer, neuron)
+w_in_L5N1393_my = calculate_neuron_input_weights(model, my_probe_normalised, layer, neuron)
 
+imshow(
+    t.stack([w_in_L5N1393_blank, w_in_L5N1393_my]),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Input weights in terms of the probe for neuron L{layer}N{neuron}",
+    facet_labels=["Blank In", "My In"],
+    width=750,
+)
 ```
 
 <details>
@@ -1251,7 +1579,7 @@ This is useful for the model, because if all three of these conditions hold, the
 </details>
 
 
-### note to self - I don't understand this bit
+### How much variance does the probe explain?
 
 We can also look at what fraction of the neuron's input and output weights are captured by the probe (because the vector was scaled to have unit norm, looking at the squared norm of its projection gives us this answer).
 
@@ -1259,134 +1587,186 @@ We see that the input weights are well explained by this, while the output weigh
 
 
 ```python
+w_in_L5N1393 = get_w_in(model, layer, neuron, normalize=True)
+w_out_L5N1393 = get_w_out(model, layer, neuron, normalize=True)
 
-if MAIN:
-    w_in_L5N1393 = get_w_in(model, layer, neuron)
-    w_out_L5N1393 = get_w_out(model, layer, neuron)
-    
-    U, S, Vh = t.svd(t.cat([
-        my_probe.reshape(cfg.d_model, 64),
-        blank_probe.reshape(cfg.d_model, 64)],
-    dim=1))
-    
-    # Remove the final four dimensions of U, as the 4 center cells are never blank and so the blank probe is meaningless there
-    probe_space_basis = U[:, :-4]
-    
-    print("Fraction of input weights in probe basis:", (w_in_L5N1393 @ probe_space_basis).norm().item()**2)
-    print("Fraction of output weights in probe basis:", (w_out_L5N1393 @ probe_space_basis).norm().item()**2)
+U, S, Vh = t.svd(t.cat([
+    my_probe.reshape(cfg.d_model, 64),
+    blank_probe.reshape(cfg.d_model, 64)
+], dim=1))
 
+# Remove the final four dimensions of U, as the 4 center cells are never blank and so the blank probe is meaningless there
+probe_space_basis = U[:, :-4]
+
+print("Fraction of input weights in probe basis:", (w_in_L5N1393 @ probe_space_basis).norm().item()**2)
+print("Fraction of output weights in probe basis:", (w_out_L5N1393 @ probe_space_basis).norm().item()**2)
 ```
 
-Lets try this on the layer 4 neurons with the top standard deviation, and look at how their output weights affect the my probe direction.
+<details>
+<summary>Help - I don't understand what's going on here.</summary>
+
+`U` is a matrix of shape `(512, 128)`. This is best seen as a collection of 128 vectors of size `d_model=512`, which collectively span all the residual stream directions for both probes. Note that the number of vectors is significantly smaller than the dimensionality of the residual stream (they only span 128/512 = 1/4 of the dimensions), so for a randomly chosen vector we generally don't expect it to overlap with the probe directions.
+
+In the print statements, we're projecting our input and output weights onto these vector spaces and finding the norm. The fact that this is much higher than would be expected if the vector was chosen randomly is pretty strong evidence that this neuron is mostly reading from the residual stream along the directions which our probe has identified, in other words **it's using the information located by our "blank" and "mine" probes.** The fact that this *isn't* true for the output weights suggests that the neuron is doing something different downstream (i.e. it's not just contributing to the residual stream in the directions identified by the probes).
+</details>
+
+
+### More Neurons
+
+
+Lets try this on the layer 4 neurons with the top standard deviation (of activations), and look at how their output weights affect the my probe direction.
 
 
 ```python
+layer = 3
+top_layer_3_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
 
-if MAIN:
-    layer = 3
-    top_layer_3_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
-    
-    heatmaps_blank = []
-    heatmaps_my = []
-    
-    for neuron in top_layer_3_neurons:
-        neuron = neuron.item()
-        heatmaps_blank.append(calculate_neuron_output_weights(model, blank_probe_normalised, layer, neuron))
-        heatmaps_my.append(calculate_neuron_output_weights(model, my_probe_normalised, layer, neuron))
-    
-    imshow(
-        heatmaps_blank,
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Cosine sim of Output weights and the blank color probe for top layer 3 neurons",
-        facet_labels=[f"L3N{n.item()}" for n in top_layer_3_neurons],
-        height=300,
-    )
-    
-    imshow(
-        heatmaps_my,
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Cosine sim of Output weights and the my color probe for top layer 3 neurons",
-        facet_labels=[f"L3N{n.item()}" for n in top_layer_3_neurons],
-        height=300,
-    )
+heatmaps_blank = []
+heatmaps_my = []
 
+for neuron in top_layer_3_neurons:
+    neuron = neuron.item()
+    heatmaps_blank.append(calculate_neuron_output_weights(model, blank_probe_normalised, layer, neuron))
+    heatmaps_my.append(calculate_neuron_output_weights(model, my_probe_normalised, layer, neuron))
+
+imshow(
+    t.stack(heatmaps_blank),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Cosine sim of Output weights and the 'blank color' probe for top layer {layer} neurons",
+    facet_labels=[f"L3N{n.item()}" for n in top_layer_3_neurons],
+    width=1600, height=300,
+)
+
+imshow(
+    t.stack(heatmaps_my),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Cosine sim of Output weights and the 'my color' probe for top layer {layer} neurons",
+    facet_labels=[f"L3N{n.item()}" for n in top_layer_3_neurons],
+    width=1600, height=300,
+)
 ```
+
+These look interesting, but they don't seem to have super interpretable patterns in the same way that our previous neuron did. Can you think of a different statistical measure which might capture this better?
+
+<details>
+<summary>Answer</summary>
+
+If you guessed [**kurtosis**](https://en.wikipedia.org/wiki/Kurtosis), you're exactly right! Try replacing your code with this:
+
+```python
+def kurtosis(tensor: Tensor, reduced_axes, fisher=True):
+    '''
+    Computes the kurtosis of a tensor over specified dimensions.
+    '''
+    return (((tensor - tensor.mean(dim=reduced_axes, keepdim=True)) / tensor.std(dim=reduced_axes, keepdim=True))**4).mean(dim=reduced_axes, keepdim=False) - fisher*3
+
+
+top_layer_3_neurons = einops.reduce(focus_cache["post", layer][:, 3:-3], "game move neuron -> neuron", reduction=kurtosis).argsort(descending=True)[:10]
+```
+
+What kinds of results do you get here? Can you interpret any of the neurons you see? Are they more or less interpretable than the ones returned when you took the max over std dev?
+</details>
+
 
 How does this change when we plot them for layer 4?
 
 
 ```python
+layer = 4
+top_layer_4_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
 
-if MAIN:
-    layer = 4
-    top_layer_4_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
-    
-    heatmaps_blank = []
-    heatmaps_my = []
-    
-    for neuron in top_layer_4_neurons:
-        neuron = neuron.item()
-        heatmaps_blank.append(calculate_neuron_output_weights(model, blank_probe_normalised, layer, neuron))
-        heatmaps_my.append(calculate_neuron_output_weights(model, my_probe_normalised, layer, neuron))
-    
-    imshow(
-        heatmaps_blank,
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Cosine sim of Output weights and the blank color probe for top layer 4 neurons",
-        facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
-        height=300,
-    )
-    
-    imshow(
-        heatmaps_my,
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Cosine sim of Output weights and the my color probe for top layer 4 neurons",
-        facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
-        height=300,
-    )
+heatmaps_blank = []
+heatmaps_my = []
 
+for neuron in top_layer_4_neurons:
+    neuron = neuron.item()
+    heatmaps_blank.append(calculate_neuron_output_weights(model, blank_probe_normalised, layer, neuron))
+    heatmaps_my.append(calculate_neuron_output_weights(model, my_probe_normalised, layer, neuron))
+
+imshow(
+    t.stack(heatmaps_blank),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Cosine sim of Output weights and the blank color probe for top layer 4 neurons",
+    facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
+    width=1600, height=300,
+)
+
+imshow(
+    t.stack(heatmaps_my),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Cosine sim of Output weights and the my color probe for top layer 4 neurons",
+    facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
+    width=1600, height=300,
+)
 ```
 
 Why is the blank output weights of the layer 4 neurons so striking?!
 
 A cell can *only* be legal to play in if it is blank (obviously). Since calculating blankness is easy (you just check whether a move was played), the model should be able to do this in a single layer - this is what we see above.
 
-If this is true, then we should expect the cosine similarity of output weights and the unembedding weights to exhibit the same heatmap pattern as we see above (i.e. the output weights that these striking layer 4 neurons write to the residual stream should be directly used by the unembedding at the end, to increase the logit score for the blank cells which these neurons are detecting).
+**Question - if this is true, then what observation should we expect when we compare the neuron output weights to the unembedding weights?**
 
-Let's test this out. Because of indexing (avoiding the middle 4 squares) it will be a bit messy:
+Think about this before you read on.
+
+<details>
+<summary>Answer</summary>
+
+
+If this is true, then we should expect the cosine similarity of output weights and the unembedding weights to exhibit the same heatmap pattern as we see above.
+
+In other words, these neurons which are firing strongly on blank cells are also directly writing to the residual stream, having their output used in the unembedding to increase the logit score for the blank cells which they are detecting.
+
+</details>
+
+Let's test this out. Because of indexing (avoiding the middle 4 squares) it will be a bit messy; we'll use our previous trick of using `.flatten()` then indexing with `stoi_indices`.
 
 
 ```python
+layer = 4
+top_layer_4_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
+W_U_norm = model.W_U / model.W_U.norm(dim=0, keepdim=True)
+W_U_norm = W_U_norm[:, 1:] # Get rid of the passing/dummy first element
+heatmaps_unembed = []
 
-if MAIN:
-    layer = 4
-    top_layer_4_neurons = focus_cache["post", layer][:, 3:-3].std(dim=[0, 1]).argsort(descending=True)[:10]
-    W_U_norm = model.W_U / model.W_U.norm(dim=0, keepdim=True)
-    W_U_norm = W_U_norm[:, 1:] # Get rid of the passing/dummy first element
-    heatmaps_unembed = []
-    
-    for neuron in top_layer_4_neurons:
-        neuron = neuron.item()
-        w_out = get_w_out(model, layer, neuron)
-        # Fill in the `state` tensor with cosine sims, while skipping the middle 4 squares
-        state = t.zeros(64, device=device)
-        state[stoi_indices] = w_out @ W_U_norm
-        heatmaps_unembed.append(state.reshape(8, 8))
-    
-    imshow(
-        heatmaps_unembed,
-        facet_col=0,
-        y=[i for i in "ABCDEFGH"],
-        title=f"Cosine sim of Output weights and the unembed for top layer 4 neurons",
-        facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
-        height=300,
-    )
+for neuron in top_layer_4_neurons:
+    neuron = neuron.item()
+    w_out = get_w_out(model, layer, neuron)
+    # Fill in the `state` tensor with cosine sims, while skipping the middle 4 squares
+    state = t.zeros((8, 8), device=device)
+    state.flatten()[stoi_indices] = w_out @ W_U_norm
+    heatmaps_unembed.append(state)
 
+imshow(
+    t.stack(heatmaps_unembed),
+    facet_col=0,
+    y=[i for i in "ABCDEFGH"],
+    title=f"Cosine sim of Output weights and the unembed for top layer 4 neurons",
+    facet_labels=[f"L4N{n.item()}" for n in top_layer_4_neurons],
+    width=1600, height=300,
+)
 ```
+
+Great! We've validated our hypothesis that the neurons in this layer are directly computing "blankness" and feeding this output directly into the unembedding, in order to raise the logit score for blank cells (since being blank is necessary for being legal to play in).
+
+In section 3️⃣, we'll do more of this kind of direct logit attribution.
+
+
+### Recap of this section
+
+We did the following:
+
+* Defined helper functions `get_w_in`, `get_w_out` which returned particular MLP weight vectors for a given neuron.
+* Defined functions `calculate_neuron_input_weights` and `calculate_neuron_output_weights` which returned the projection of a neuron's input and output weights onto the directions of a given probe (e.g. `my_probe` or `blank_probe`).
+* Discovered that some neurons have very interpretable input weights, for example:
+    * After comparing the input weights of `L5N1393` to the probe directions, we found that it was detecting a particular diagonal line of blank-theirs-mine, since this indicates that the blank square is legal.
+        * This is interesting, and not necessarily something we could have predicted beforehand.
+    * After looking at the input weights of some layer 4 neurons, we found that they were detecting whether a square was blank (since this is necessary for legality), and their output weights seemed to be directly used in the embedding to increase log probs for those blank squares.
+        * This is not as interesting, because the "check if cell" is blank operation is pretty easy.
+
 
 ## Activation Patching
 
@@ -1431,77 +1811,104 @@ First, we can plot the original and corrupted boards, to visualize this:
 
 
 ```python
+game_index = 4
+move = 20
 
-if MAIN:
-    game_index = 4
-    move = 20
-    
-    plot_single_board(focus_games_string[game_index, :move+1], title="Original Game (black plays E0)")
-    plot_single_board(focus_games_string[game_index, :move].tolist()+[16], title="Corrupted Game (blank plays C0)")
-
+plot_single_board(focus_games_string[game_index, :move+1], title="Original Game (black plays E0)")
+plot_single_board(focus_games_string[game_index, :move].tolist()+[16], title="Corrupted Game (blank plays C0)")
 ```
 
 Next, let's define our clean and corrupted inputs as token strings, to be fed into our model:
 
 
 ```python
-
-if MAIN:
-    clean_input = focus_games_int[game_index, :move+1].clone()
-    corrupted_input = focus_games_int[game_index, :move+1].clone()
-    corrupted_input[-1] = to_int("C0")
-    print("Clean:     ", ", ".join(int_to_label(corrupted_input)))
-    print("Corrupted: ", ", ".join(int_to_label(clean_input)))
-
+clean_input = focus_games_int[game_index, :move+1].clone()
+corrupted_input = focus_games_int[game_index, :move+1].clone()
+corrupted_input[-1] = to_int("C0")
+print("Clean:     ", ", ".join(int_to_label(corrupted_input)))
+print("Corrupted: ", ", ".join(int_to_label(clean_input)))
 ```
 
 ```python
+clean_logits, clean_cache = model.run_with_cache(clean_input)
+corrupted_logits, corrupted_cache = model.run_with_cache(corrupted_input)
 
-if MAIN:
-    clean_logits, clean_cache = model.run_with_cache(clean_input)
-    corrupted_logits, corrupted_cache = model.run_with_cache(corrupted_input)
-    
-    clean_log_probs = clean_logits.log_softmax(dim=-1)
-    corrupted_log_probs = corrupted_logits.log_softmax(dim=-1)
-
+clean_log_probs = clean_logits.log_softmax(dim=-1)
+corrupted_log_probs = corrupted_logits.log_softmax(dim=-1)
 ```
 
 ### Exercise - create a patching metric
 
-Finally, we'll create a patching function. This is left as an exercise (all necessary details are included in the docstring).
+```c
+Difficulty: 🟠🟠⚪⚪⚪
+Importance: 🟠🟠🟠🟠⚪
+
+You shouldn't spend more than 10-15 minutes on this exercise.
+```
+
+Finally, we'll create a patching metric. This is a function we'll apply to our output logits, in order to measure how much they've changed (in some important way) from their clean values.
+
+We want our patching metric to satisfy the following conditions:
+
+* Should have value **one** when the logits are the same as in the clean distribution.
+* Should have value **zero** when the logits are the same as in the corrupted distribution.
+    * *Note - we sometimes use the opposite convention. Either might be justified, depending on the context. Here, you should think of a value of 1 meaning "100% of performance is preserved", and 0 as "performance is gone".*
+* Should be a **linear** function of the log probs.
+    * **Important note** - this is *not* the same as being a linear function of the logits. Can you see why?
+* Should just be a function of the logits for the `F0` token, at the final game move (since this is the only move that changes between clean and corrupted).
+    * Note - you can index into the `d_vocab` dimension of logits using the `f0_index` variable defined below.
+
+This should be enough for you to uniquely define your patching metric. Also, note that it should return a **scalar tensor** (this is important for the transformerlens patching functions to work).
 
 
 ```python
+f0_index = to_int("F0")
+clean_f0_log_prob = clean_log_probs[0, -1, f0_index]
+corrupted_f0_log_prob = corrupted_log_probs[0, -1, f0_index]
 
-if MAIN:
-    f0_index = to_int("F0")
-    clean_f0_log_prob = clean_log_probs[0, -1, f0_index]
-    corrupted_f0_log_prob = corrupted_log_probs[0, -1, f0_index]
-    
-    print("Clean log prob", clean_f0_log_prob.item())
-    print("Corrupted log prob", corrupted_f0_log_prob.item(), "\n")
+print("Clean log prob", clean_f0_log_prob.item())
+print("Corrupted log prob", corrupted_f0_log_prob.item(), "\n")
     
 def patching_metric(patched_logits: Float[Tensor, "batch=1 seq=21 d_vocab=61"]):
     '''
     Function of patched logits, calibrated so that it equals 0 when performance is 
     same as on corrupted input, and 1 when performance is same as on clean input.
 
-    Should only be a function of the logits for the F0 token (you can index into 
-    patched logits using the `f0_index` variable).
-
-    Should be a linear function of the log-softmax of patched logits (note, this is
-    not the same as being a linear function of the logits themselves - can you see 
-    why doing it this way is preferable?).
+    Should be linear function of the logits for the F0 token at the final move.
     '''
     pass
 
 
-if MAIN:
-    tests.test_patching_metric(patching_metric, clean_log_probs, corrupted_log_probs)
-
+tests.test_patching_metric(patching_metric, clean_log_probs, corrupted_log_probs)
 ```
 
+<details>
+<summary>Solution</summary>
+
+
+```python
+def patching_metric(patched_logits: Float[Tensor, "batch=1 seq=21 d_vocab=61"]):
+    '''
+    Function of patched logits, calibrated so that it equals 0 when performance is 
+    same as on corrupted input, and 1 when performance is same as on clean input.
+
+    Should be linear function of the logits for the F0 token at the final move.
+    '''
+    # SOLUTION
+    patched_log_probs = patched_logits.log_softmax(dim=-1)
+    return (patched_log_probs[0, -1, f0_index] - corrupted_f0_log_prob) / (clean_f0_log_prob - corrupted_f0_log_prob)
+```
+</details>
+
+
 ### Exercise - write a patching function
+
+```c
+Difficulty: 🟠🟠🟠🟠⚪
+Importance: 🟠🟠🟠🟠⚪
+
+This exercise is very important; getting it right shows you understand activation patching.
+```
 
 Below, you should fill in the functions `patch_attn_layer_output` and `patch_mlp_layer_output`.
 
@@ -1537,7 +1944,7 @@ def get_act_patch_resid_pre(
     corrupted_input: Float[Tensor, "batch pos"], 
     clean_cache: ActivationCache, 
     patching_metric: Callable[[Float[Tensor, "batch seq d_model"]], Float[Tensor, ""]]
-) -> Float[Tensor, "2 d_model"]:
+) -> Float[Tensor, "2 n_layers"]:
     '''
     Returns an array of results, corresponding to the results of patching at
     each (attn_out, mlp_out) for all layers in the model.
@@ -1552,134 +1959,6 @@ def get_act_patch_resid_pre(
 
 
 ```python
-def calculate_attn_and_mlp_probe_score_contributions(
-    focus_cache: ActivationCache, 
-    my_probe: Float[Tensor, "d_model rows cols"],
-    layer: int,
-    game_index: int, 
-    move: int
-) -> Tuple[Float[Tensor, "layers rows cols"], Float[Tensor, "layers rows cols"]]:
-    
-    # SOLUTION
-    attn_contributions = t.stack([    
-        einops.einsum(
-            focus_cache["attn_out", l][game_index, move], my_probe, 
-            "d_model, d_model rows cols -> rows cols",
-        )
-        for l in range(layer+1)
-    ])
-    mlp_contributions = t.stack([
-        einops.einsum(
-            focus_cache["mlp_out", l][game_index, move], my_probe, 
-            "d_model, d_model rows cols -> rows cols",
-        )
-        for l in range(layer+1)])
-
-    return (attn_contributions, mlp_contributions)
-
-def calculate_accumulated_probe_score(
-    focus_cache: ActivationCache, 
-    my_probe: Float[Tensor, "d_model rows cols"],
-    layer: int,
-    game_index: int, 
-    move: int
-) -> Float[Tensor, "rows cols"]:
-    
-    # SOLUTION
-    return einops.einsum(
-        focus_cache["resid_post", layer][game_index, move], my_probe, 
-        "d_model, d_model rows cols -> rows cols",
-    )
-
-def get_w_in(
-    model: HookedTransformer,
-    layer: int,
-    neuron: int,
-    normalize: bool = False,
-) -> Float[Tensor, "d_model"]:
-    '''
-    Returns the input weights for the neuron in the list, at each square on the board.
-
-    If normalize is True, the weights are normalized to unit norm.
-    '''
-    # SOLUTION
-    w_in = model.W_in[layer, :, neuron].detach().clone()
-    if normalize: w_in /= w_in.norm(dim=0, keepdim=True)
-    return w_in
-
-def get_w_out(
-    model: HookedTransformer,
-    layer: int,
-    neuron: int,
-    normalize: bool = False,
-) -> Float[Tensor, "d_model"]:
-    '''
-    Returns the input weights for the neuron in the list, at each square on the board.
-    '''
-    # SOLUTION
-    w_out = model.W_out[layer, neuron, :].detach().clone()
-    if normalize: w_out /= w_out.norm(dim=0, keepdim=True)
-    return  w_out
-
-def calculate_neuron_input_weights(
-    model: HookedTransformer, 
-    probe: Float[Tensor, "d_model row col"], 
-    layer: int, 
-    neuron: int
-) -> Float[Tensor, "rows cols"]:
-    '''
-    Returns tensor of the input weights for each neuron in the list, at each square on the board,
-    projected along the corresponding probe directions.
-
-    Assume probe directions are normalized. You should also normalize the model weights.
-    '''
-    # SOLUTION
-    w_in = get_w_in(model, layer, neuron, normalize=True)
-
-    return einops.einsum(
-        w_in, probe,
-        "d_model, d_model row col -> row col",
-    )
-
-def calculate_neuron_output_weights(
-    model: HookedTransformer, 
-    probe: Float[Tensor, "d_model row col"], 
-    layer: int, 
-    neuron: int
-) -> Float[Tensor, "rows cols"]:
-    '''
-    Returns tensor of the output weights for each neuron in the list, at each square on the board,
-    projected along the corresponding probe directions.
-
-    Assume probe directions are normalized. You should also normalize the model weights.
-    '''
-    # SOLUTION
-    w_out = get_w_out(model, layer, neuron, normalize=True)
-
-    return einops.einsum(
-        w_out, probe,
-        "d_model, d_model row col -> row col",
-    )
-
-def patching_metric(patched_logits: Float[Tensor, "batch=1 seq=21 d_vocab=61"]):
-    '''
-    Function of patched logits, calibrated so that it equals 0 when performance is 
-    same as on corrupted input, and 1 when performance is same as on clean input.
-
-    Should only be a function of the logits for the F0 token (you can index into 
-    patched logits using the `f0_index` variable).
-
-    Should be a linear function of the log-softmax of patched logits (note, this is
-    not the same as being a linear function of the logits themselves - can you see 
-    why doing it this way is preferable?).
-    '''
-    # SOLUTION
-    patched_log_probs = patched_logits.log_softmax(dim=-1)
-    return (patched_log_probs[0, -1, f0_index] - corrupted_f0_log_prob) / (clean_f0_log_prob - corrupted_f0_log_prob)
-
-
-# Code to test your function:
-
 def patch_final_move_output(
     activation: Float[Tensor, "batch seq d_model"], 
     hook: HookPoint,
@@ -1701,7 +1980,7 @@ def get_act_patch_resid_pre(
     corrupted_input: Float[Tensor, "batch pos"], 
     clean_cache: ActivationCache, 
     patching_metric: Callable[[Float[Tensor, "batch seq d_model"]], Float[Tensor, ""]]
-) -> Float[Tensor, "2 d_model"]:
+) -> Float[Tensor, "2 n_layers"]:
     '''
     Returns an array of results, corresponding to the results of patching at
     each (attn_out, mlp_out) for all layers in the model.
@@ -1725,17 +2004,32 @@ def get_act_patch_resid_pre(
 
 
 ```python
+patching_results = get_act_patch_resid_pre(model, corrupted_input, clean_cache, patching_metric)
 
-if MAIN:
-    patching_results = get_act_patch_resid_pre(model, corrupted_input, clean_cache, patching_metric)
-    
-    line(patching_results, title="Layer Output Patching Effect on F0 Log Prob", line_labels=["attn", "mlp"], width=750)
-
+line(patching_results, title="Layer Output Patching Effect on F0 Log Prob", line_labels=["attn", "mlp"], width=750)
 ```
+
+<details>
+<summary>Spoiler - what results you should get</summary>
 
 We can see that most layers just don't matter! But MLP0, MLP5, MLP6 and Attn7 do! My next steps would be to get more fine grained and to patch in individual neurons and see how far I can zoom in on *why* those layers matter - ideally at the level of understanding how these neurons compose with each other and the changed the embedding, using the fact that most of the model just doesn't matter here. And then to compare this data to the above techniques for understanding neurons. If you want to go off and explore this, that would be a great exercise at this point (or to return to at the end of the exercises).
 
 It's not surprising that the attention layers are fairly unimportant - attention specialises in moving information between token positions, we've only changed the information at the current position! (Attention does have the ability to operate on the current position, but that's not the main thing it does).
+</details>
+
+
+### Recap of this section
+
+We did the following:
+
+* Learned how **activation patching** worked.
+* Constructed the following datasets for patching:
+    * Clean distribution = unaltered game,
+    * Corrupted distribution = game with a single move flipped (changing th legality of a square),
+* Looked at the effect on patching at the **output of attention and MLP layers** to see which ones changed the output significantly.
+    * We found a handful of the MLP layers, and the final attention layer, mattered.
+        * Attention layers mostly not mattering was unsurprising, since attention's main job is to move around information rather than operate on it.
+    * If we wanted, we could get more granular at this point, and explore which neurons in these layers had a significant effect.
 
 
 
@@ -1743,7 +2037,7 @@ It's not surprising that the attention layers are fairly unimportant - attention
 """, unsafe_allow_html=True)
 
 
-def section_2():
+def section_3():
 
     st.sidebar.markdown(r"""
 
@@ -1752,13 +2046,19 @@ def section_2():
 <ul class="contents">
     <li class='margtop'><a class='contents-el' href='#direct-logit-attribution'>Direct logit attribution</a></li>
     <li><ul class="contents">
+        <li><a class='contents-el' href='#exercise-compare-the-unembeds-for-c0-and-d1'><b>Exercise</b> - compare the unembeds for C0 and D1</a></li>
         <li><a class='contents-el' href='#exercise-compute-fraction-of-variance-explained-by-unembedding-subspace'><b>Exercise</b> - compute fraction of variance explained by unembedding subspace</a></li>
+        <li><a class='contents-el' href='#exercise-figure-out-what's-going-on-with-one-of-these-games'><b>Exercise</b> - figure out what's going on with one of these games</a></li>
     </ul></li>
     <li class='margtop'><a class='contents-el' href='#max-activating-datasets'>Max Activating Datasets</a></li>
     <li><ul class="contents">
         <li><a class='contents-el' href='#exercise-investigate-more-neurons'><b>Exercise</b> - investigate more neurons</a></li>
     </ul></li>
     <li class='margtop'><a class='contents-el' href='#spectrum-plots'>Spectrum Plots</a></li>
+    <li><ul class="contents">
+        <li><a class='contents-el' href='#exercise-investigate-this-spectrum-plot'><b>Exercise</b> - investigate this spectrum plot</a></li>
+        <li><a class='contents-el' href='#exercise-make-more-spectrum-plots'><b>Exercise</b> - make more spectrum plots</a></li>
+        <li><a class='contents-el' href='#recap-of-this-section'>Recap of this section</a></li>
 </ul></li>""", unsafe_allow_html=True)
 
     st.markdown(r"""
@@ -1782,62 +2082,94 @@ As above, we can use the probe weights to analyse its input weights. So we go in
 
 ## Direct logit attribution
 
-We can also take the direct logit attribution of its output weights - ie `w_out @ W_U`, to see if the neuron significantly affects the output logits directly.
+We can also take the direct logit attribution of its output weights - ie `w_out @ W_U`, to see if the neuron significantly affects the output logits directly (like we did at the end of section 2️⃣).
 
-Note that this is purely weights based analysis, we have not yet run the model and looked at any activations!
+Note that this is purely weights based analysis, we're not yet looking at actual model activations.
 
-(Note on the code below - `.flatten()` returns a view of the `state` tensor, so we can fill in its values at `stoi_indices` (which is a list of indices between 0 and 63 inclusive, missing out the four middle squares) without actually reshaping the 8x8 tensor.)
+(Note on the code below - `.flatten()` returns a [view](https://pytorch.org/docs/stable/tensor_view.html) of the `state` tensor, so we can fill in its values at `stoi_indices` (which is a list of indices between 0 and 63 inclusive, missing out the four middle squares) without actually reshaping the 8x8 tensor.)
 
 
 ```python
+layer = 5
+neuron = 1393
 
-if MAIN:
-    layer = 5
-    neuron = 1393
-    
-    w_out = get_w_out(model, layer, neuron, normalize=False)
-    state = t.zeros(8, 8, device=device)
-    state.flatten()[stoi_indices] = w_out @ model.W_U[:, 1:]
-    plot_square_as_board(state, title=f"Output weights of Neuron L{layer}N{neuron} in the output logit basis", width=600)
-
+w_out = get_w_out(model, layer, neuron, normalize=False)
+state = t.zeros(8, 8, device=device)
+state.flatten()[stoi_indices] = w_out @ model.W_U[:, 1:]
+plot_square_as_board(state, title=f"Output weights of Neuron L{layer}N{neuron} in the output logit basis", width=600)
 ```
 
-Here we immediately see that boosting `C0` is an important part of what happens, but that it also boosts D1, which is surprising! (D1 is filled in our hypothesis, so must be illegal!)
+Here we immediately see that boosting `C0` is an important part of what happens (which fits with our earlier hypothesis about the diagonal pattern which this MLP was picking up on), but that it also boosts `D1`, which is surprising! (`D1` is filled in our hypothesis, so must be illegal!)
 
-One hypothesis is that the unembed for C0 and D1 are highly aligned, so it can't easily boost one but not the other. But this is false, they're almost orthogonal:
+One hypothesis is that the unembed for `C0` and `D1` are highly aligned, so it can't easily boost one but not the other.
 
 
-```python
+### Exercise - compare the unembeds for C0 and D1
 
-if MAIN:
-    c0_U = model.W_U[:, 17].detach()
-    c0_U /= c0_U.norm()
-    
-    d1_U = model.W_U[:, 26].detach()
-    d1_U /= d1_U.norm()
-    
-    print(f"Cosine sim of C0 and D1 unembeds: {c0_U @ d1_U}")
+```c
+Difficulty: 🟠🟠⚪⚪⚪
+Importance: 🟠🟠⚪⚪⚪
 
+You should spend up to 5-10 minutes on this exercise.
 ```
 
-To check that this is a *big* part of the neuron's output, lets look at the fraction of variance of the output captured by the $W_U$ subspace.
+Is this hypothesis true? Test it by calculating the cosine similarity of the `C0` and `D1` unembeds.
 
-
-### Exercise - compute fraction of variance explained by unembedding subspace
-
-Note - when we say "fraction of a vector's variance explained by a subspace", this means the fraction of the original vector's squared norm which is represented by its projection onto the subspace. So if we have a vector $v$ and a subspace $W$ represented by a matrix of orthogonal row vectors, then $v^T W$ are the components of the projection of $v$ onto $W$, and the fraction of $v$'s variance explained by the subspace $W$ is $\|v^T W\|^2 / \|v\|^2$.
-
-Gotcha - remember to remove the 0th vocab entry from $W_U$, since this never comes up.
+Recall, you can use the `to_int` helper function to convert a label like `"C0"` to an integer index (which you can use to index into the unembedding).
 
 
 ```python
-# Compute the fraction of variance of neuron output vector explained by unembedding subspace
+# YOUR CODE HERE - calculate cosine sim between unembeddings
 
 ```
 
 <details>
 <summary>Solution</summary>
 
+
+You should see that the cosine similarity is close to zero, i.e. they're basically orthogonal. So this hypothesis is false! What else do you think might be going on here?
+
+```python
+c0_U = model.W_U[:, to_int("C0")].detach()
+c0_U /= c0_U.norm()
+d1_U = model.W_U[:, to_int("D1")].detach()
+d1_U /= d1_U.norm()
+rprint(f"Cosine sim of C0 and D1 unembeds: {c0_U @ d1_U}")
+
+```
+</details>
+
+
+To check that this is a *big* part of the neuron's output, lets look at the fraction of variance of the output captured by the $W_U$ subspace.
+
+
+### Exercise - compute fraction of variance explained by unembedding subspace
+
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠⚪⚪⚪
+
+You should spend up to 10-20 minutes on this exercise.
+
+This might be a bit harder to understand conceptually, without a linear algebra background.
+```
+
+Note - when we say "fraction of a vector's variance explained by a subspace", this means the fraction of the original vector's squared norm which is represented by its projection onto the subspace. So if we have a vector $v$ and a subspace $W$ represented by a matrix of orthogonal row vectors, then $v^T W$ are the components of the projection of $v$ onto $W$, and the fraction of $v$'s variance explained by the subspace $W$ is $\|v^T W\|^2 / \|v\|^2$.
+
+If you're confused by this, then you should go to the [How much variance does the probe explain?](#how-much-variance-does-the-probe-explain) section, where we do a computation which is similar to (but more complicated than) to the one which you should do now.
+
+*Gotcha - remember to remove the 0th vocab entry from $W_U$ before taking SVD, since this corresponds to the "pass" move which never comes up in our data.*
+
+
+```python
+# YOUR CODE HERE - compute the fraction of variance of neuron output vector explained by unembedding subspace
+```
+
+<details>
+<summary>Solution</summary>
+
+
+You should find about 1/4 of the variance is explained. This is less than we might expect, and suggests that more might be going on here. Maybe the output of this neuron is used bu something else downstream before the unembedding is applied?
 
 ```python
 w_out = get_w_out(model, layer, neuron, normalize=True)
@@ -1852,13 +2184,44 @@ Another quick sanity check is just plotting what the neuron activations look lik
 
 
 ```python
+neuron_acts = focus_cache["post", layer, "mlp"][:, :, neuron]
 
-if MAIN:
-    neuron_acts = focus_cache["post", layer, "mlp"][:, :, neuron]
-    
-    imshow(neuron_acts, title=f"L{layer}N{neuron} Activations over 50 games", yaxis="Game", xaxis="Move")
-
+imshow(
+    neuron_acts,
+    title=f"L{layer}N{neuron} Activations over 50 games",
+    labels={"x": "Move", "y": "Game"},
+    aspect="auto",
+    width=900
+)
 ```
+
+### Exercise - figure out what's going on with one of these games
+
+Take one of the games where this neuron fires (e.g. game 5 seems like a good example). Plot the state of the game (using the monochrome `imshow`-based plots which we demo'ed at the start of this notebook).
+
+<details>
+<summary>Answer (for move 5)</summary>
+
+Our neuron fires on moves 10, 12, 14, 16, 18 and 20. By our theory, we expect to find that these are precisely the moves where `C0` is legal because it allows us to capture along the diagonal which contains `D1`.
+
+```python
+imshow(
+    focus_states[5, :25],
+    facet_col=0,
+    facet_col_wrap=5,
+    y=list("ABCDEFGH"),
+    facet_labels=[f"Move {i}" for i in range(25)],
+    title="First 16 moves of first game",
+    color_continuous_scale="Greys",
+    coloraxis_showscale=False,
+    width=1000,
+    height=1000,
+)
+```
+
+This is exactly what we find. `C0` is a legal next move for the states labelled 10, 12, 14, 16 and 18. In all cases, it's white's move, and the legality is because `D1` is occupied by black and `E2` by white. Note that the `C0` square is legal in some other states (e.g. after move 22, when it's black's move), but we don't expect the neuron to fire in this case because the legality isn't because we can capture along the `C0-D1-E2` diagonal.
+</details>
+
 
 ## Max Activating Datasets
 
@@ -1866,76 +2229,107 @@ if MAIN:
 Max activating datasets are a useful but also sometimes misleading tool we can use to better understand a neuron's activations. From my [Dynalist notes](https://dynalist.io/d/n2ZWtnoYHrU1s4vnFSAQ519J#z=pwjeUj-94p6EwwMO_41Kb3h1):
 
 * **Max Activating Dataset Examples** aka **dataset examples** aka **max examples** are a simple technique for neuron interpretability. The model is run over a lot of data points, and we select the top K data points by how much they activate that neuron.
-    * Sometimes there is a clear pattern in these inputs (eg they’re all pictures of boats), and this is (weak!) evidence that the neuron detects that pattern. Sometimes there are multiple clusters of inputs according to different patterns, which suggests that the neuron is **polysemantic**
-    * This is a very simple and dumb technique, and has faced criticism, see eg [The Interpretability Illusion](https://arxiv.org/abs/2104.07143) which found that different datasets gave different sets of examples, each of which had a __different__ clear pattern.
-    * See outputs of this for image models in [OpenAI Microscope](https://microscope.openai.com/) and language models in [Neuroscope](https://neuroscope.io/)
+    * Sometimes there is a clear pattern in these inputs (eg they’re all pictures of boats), and this is (weak!) evidence that the neuron detects that pattern. Sometimes there are multiple clusters of inputs according to different patterns, which suggests that the neuron is **polysemantic** (i.e. it represents some combination of multiple different features).
+    * This is a very simple and dumb technique, and has faced criticism, see e.g. [The Interpretability Illusion](https://arxiv.org/abs/2104.07143) which found that different datasets gave different sets of examples, each of which had a __different__ clear pattern.
+    * See outputs of this for image models in [OpenAI Microscope](https://microscope.openai.com/) and language models in [Neuroscope](https://neuroscope.io/).
 
-Doing this properly across many games is effort, but here we have cached outputs on 50 games (3000 moves), so we can look at the top 30 games there. This is hard to look at individually, so we can aggregate according to how often each cell is mine vs theirs (setting theirs==1, mine==-1 and blank==0, and averaging).
-
-
-```python
-# focus_states_flipped_value does this but has theirs==1 and mine==2, not 1 and -1. So let's convert!
-
-if MAIN:
-    focus_states_flipped_pm1 = t.zeros_like(focus_states_flipped_value, device=device)
-    focus_states_flipped_pm1[focus_states_flipped_value==2] = -1.
-    focus_states_flipped_pm1[focus_states_flipped_value==1] = 1.
-    # Now, theirs==1 and mine==-1
-
-```
-
-The following code involves a lot of messy indexing and reshaping, no need to follow it too closely:
+Doing this properly across many games is effort, but here we have cached outputs on 50 games (3000 moves), so we can look at the top 30 games there.
 
 
 ```python
-# Boolean array for whether the neuron is in the top 30 activations over all games and moves
+top_moves = neuron_acts > neuron_acts.quantile(0.99)
 
-if MAIN:
-    top_moves = neuron_acts.flatten() > neuron_acts.quantile(0.99)
-    
-    # For each top activation, get the corresponding board state (flattened)
-    board_state_at_top_moves: Int[Tensor, "topk 64"] = focus_states_flipped_pm1[:, :-1].reshape(-1, 64)[top_moves]
-    # Rearrange into (rows, cols), then take mean over all boards
-    board_state_at_top_moves = board_state_at_top_moves.reshape(-1, 8, 8).float().mean(0)
-    
-    plot_square_as_board(
-        board_state_at_top_moves, 
-        title=f"Aggregated top 30 moves for neuron L{layer}N{neuron}", 
-        width=600
-    )
+focus_states_flipped_value = focus_states_flipped_value.to(device)
+board_state_at_top_moves = t.stack([
+    (focus_states_flipped_value == 2)[:, :-1][top_moves].float().mean(0),
+    (focus_states_flipped_value == 1)[:, :-1][top_moves].float().mean(0),
+    (focus_states_flipped_value == 0)[:, :-1][top_moves].float().mean(0)
+])
 
+plot_square_as_board(
+    board_state_at_top_moves, 
+    facet_col=0,
+    facet_labels=["Mine", "Theirs", "Blank"],
+    title=f"Aggregated top 30 moves for neuron L{layer}N{neuron}", 
+)
 ```
 
-Explanation - for all moves in the max activating dataset, `D1` is theirs and `E2` is mine. This is moderately strong evidence that our neuron is doing the thing we think it's doing.
+Note that the blank cells show up with high frequency - this is one of the kinds of things [you have to watch out for](https://arxiv.org/abs/2104.07143), since exactly how you've defined your dataset will affect the features of the max activating dataset you end up finding.
+
+We mostly care about the "mine vs theirs" distinction here because it's the most interesting, so let's create a new tensor where "mine" is `-1` and "theirs" is `+1`, then taking a mean over this tensor will give us an idea of "mine vs theirs".
+
+
+```python
+focus_states_flipped_pm1 = t.zeros_like(focus_states_flipped_value, device=device)
+focus_states_flipped_pm1[focus_states_flipped_value==2] = 1.
+focus_states_flipped_pm1[focus_states_flipped_value==1] = -1.
+
+board_state_at_top_moves = focus_states_flipped_pm1[:, :-1][top_moves].float().mean(0)
+
+plot_square_as_board(
+    board_state_at_top_moves, 
+    title=f"Aggregated top 30 moves for neuron L{layer}N{neuron} (1 = theirs, -1 = mine)",
+)
+```
+
+We see that, for all moves in the max activating dataset, `D1` is theirs and `E2` is mine. This is moderately strong evidence that our neuron is doing the thing we think it's doing.
 
 
 ### Exercise - investigate more neurons
 
+```c
+Difficulty: 🟠🟠🟠⚪⚪
+Importance: 🟠🟠🟠🟠⚪
 
-Try the same thing for the top 10 neurons in layer 5 (where "top 10" is measured by the standard deviation of the neurons' activations, over all games and moves from the data in `focus_cache`). You'll be able to copy and paste some code from earlier (the `plot_square_as_board` can also take a tensor of shape `(batch, 8, 8)`, with the added argument `facet_col=0`, and `facet_labels: List[str]` to label each subplot).
+You should spend up to 15-30 minutes on this exercise.
+
+This exercise involves applying the same techniques you used above to other neurons, in a batched way.
+```
+
+
+Let's review the kinds of plots we've made during this section. There have been two kinds:
+
+1. **Direct logit attribution plots**, where we calculated the cosine similarity of the corresponding neuron with the unembedding weights corresponding to each square.
+
+<details>
+<summary>Example</summary>
+
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/plottwo.png" width="950">
+
+</details>
+
+2. **Max activating dataset plots**, where we get a heatmap of how frequently a square was mine / theirs over the dataset we're choosing (where that dataset is the max activating dataset for some particular neuron).
+
+<details>
+<summary>Example</summary>
+
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/plotone.png" width="750">
+</details>
+
+Try and make both of these plots, but for **all the top 10 neurons in layer 5** (where, like before, we measure "top 10" by the standard deviation of the neurons' activations, over all games and moves from the data in `focus_cache`). You'll be able to copy and paste some code from earlier.
+
+We've given you the code for making the plots. All you need to do is calculate the `output_weights_in_logit_basis` and `board_states` tensors, which should be batched versions of the tensors which were used to generate the plots above (the 0th axis should be the neuron index, i.e. the `[0, ...]`-th slice of each of these tensors should be the things we fed into our plotting functions earlier in this section).
 
 Can you guess what any of these neurons are doing? Does it help if you also plot some of them in the logit basis, like you did for `L5N1393`?
 
-<details>
-<summary>Hint - code to get top 10 neurons</summary>
-
-```python
-top_neurons = focus_cache["post", 5, "mlp"].std(dim=[0, 1]).argsort(descending=True)[:10]
-```
-</details>
-
-
-```python
-
-if MAIN:
-    top_neurons = focus_cache["post", 5, "mlp"].std(dim=[0, 1]).argsort(descending=True)[:10]
-
-```
 
 ```python
 # Your code here - investigate the top 10 neurons by std dev of activations, see what you can find!
-
+plot_square_as_board(
+    output_weights_in_logit_basis, 
+    title=f"Output weights of top 10 neurons in layer 5, in the output logit basis",
+    facet_col=0, 
+    facet_labels=[f"L5N{n.item()}" for n in top_neurons]
+)
+plot_square_as_board(
+    board_states, 
+    title=f"Aggregated top 30 moves for each top 10 neuron in layer 5", 
+    facet_col=0, 
+    facet_labels=[f"L5N{n.item()}" for n in top_neurons]
+)
 ```
+
+How do you interpret the results?
 
 <details>
 <summary>Answer (a few examples)</summary>
@@ -1944,8 +2338,6 @@ Like the previous neuron, some of these should be interpretable. Examples:
 
 * `L5N1406` - if `D4` is theirs and `D5` is blank, then this boosts the logits for `D5`.
 * `L5N1985` - if `F4` is blank, and the opponents' pieces are adjacent to it, then this boosts the logits for `F4`.
-
-Note that some of these aren't certain, unlike `L51393` (e.g. for the first neuron in this list, if `D4` is theirs and `D5` is blank then it doesn't mean with certainty that `D5` is legal, but it does make it a lot more likely). However, others are certain, like `L51949`, which seems to have the same kind of pattern as `L51393` but for different squares.
 </details>
 
 
@@ -1955,30 +2347,83 @@ One of the best ways to validate a hypothesis about neurons is to use a **spectr
 
 Fascinatingly, we see that our hypothesis did *not* fully capture the neuron - almost every high activation had the hypothesised configuration, but so did some low ones! I'm not sure what's going on here, but it reveals a weakness of max activating dataset examples - they don't let you notice when your hypothesis allows false positives!
 
-**Exercise**: Look at the moves with this configuration and low activations - what's going on there? Can you see any patterns in the board states? In the moves? What does the neuron activation look like over the course of the game?
+<details>
+<summary>Question - can you explain why some of the activations are negative?</summary>
+
+Remember we're using `GELU`, which can be negative.
+</details>
 
 
 ```python
+c0 = focus_states_flipped_pm1[:, :, 2, 0]
+d1 = focus_states_flipped_pm1[:, :, 3, 1]
+e2 = focus_states_flipped_pm1[:, :, 4, 2]
 
-if MAIN:
-    c0 = focus_states_flipped_pm1[:, :, 2, 0]
-    d1 = focus_states_flipped_pm1[:, :, 3, 1]
-    e2 = focus_states_flipped_pm1[:, :, 4, 2]
-    
-    label = (c0==0) & (d1==-1) & (e2==1)
-    
-    neuron_acts = focus_cache["post", 5][:, :, 1393]
-    df = pd.DataFrame({"acts":neuron_acts.flatten().tolist(), "label":label[:, :-1].flatten().tolist()})
-    px.histogram(df, x="acts", color="label", histnorm="percent", barmode="group", nbins=100, title="Spectrum plot for neuron L5N1393 testing C0==BLANK & D1==THEIR'S & E2==MINE")
+label = (c0==0) & (d1==-1) & (e2==1)
 
+neuron_acts = focus_cache["post", 5][:, :, 1393]
+    
+def make_spectrum_plot(
+    neuron_acts: Float[Tensor, "batch"],
+    label: Bool[Tensor, "batch"],
+    **kwargs
+) -> None:
+    '''
+    Generates a spectrum plot from the neuron activations and a set of labels.
+    '''
+    px.histogram(
+        pd.DataFrame({"acts": neuron_acts.tolist(), "label": label.tolist()}), 
+        x="acts", color="label", histnorm="percent", barmode="group", nbins=100, 
+        title="Spectrum plot for neuron L5N1393 testing C0==BLANK & D1==THEIRS & E2==MINE",
+        color_discrete_sequence=px.colors.qualitative.Bold
+    ).show()
+
+make_spectrum_plot(neuron_acts.flatten(), label[:, :-1].flatten())
 ```
+
+### Exercise - investigate this spectrum plot
+
+```c
+Difficulty: 🟠🟠🟠🟠🟠
+Importance: 🟠🟠🟠🟠⚪
+
+This is a very open-ended exercise, with no time estimates. You can come back to this at the end if you like.
+```
+
+Look at the moves with this configuration and low activations - what's going on there? Can you see any patterns in the board states? In the moves? What does the neuron activation look like over the course of the game?
+
+
+### Exercise - make more spectrum plots
+
+```c
+Difficulty: 🟠🟠🟠🟠⚪
+Importance: 🟠🟠🟠🟠⚪
+
+This is a very open-ended exercise, with no time estimates. You can come back to this at the end if you like.
+```
+
+Try to find another neuron with an interpretable attention pattern. Make a spectrum plot for it. What do you find?
+
+
+### Recap of this section
+
+In this section, we did the following:
+
+* Used **direct logit attribution** to see how the output weights of neurons were affecting the output logits for each square.
+    * Found `L5N1393` was boosting the logits for cell `C0`.
+* Used **max activating datasets** to see which kinds of game states were causing certain neurons to fire strongly.
+    * Found `L5N1393` was firing strongly when on the `(C0==BLANK) & (D1==THEIRS) & (E2==MINE)` pattern.
+* Repeated these two plots for a bunch of other neurons, and found that lots of them were interpretable in similar ways (i.e. they all activated strongly on a particular pattern, and positively affected the logits for a square which would be legal to play in that pattern).
+* Made a **spectrum plot**, and found that our explanation of the neuron wasn't the whole story (some game states with the given pattern *didn't* cause the neuron to fire).
+    * This revealed a weakness with max activating datasets as a method of finding a full explanation of a neuron's behaviour.
+
 
 
 
 """, unsafe_allow_html=True)
 
 
-def section_3():
+def section_4():
 
     st.sidebar.markdown(r"""
 
@@ -2002,38 +2447,48 @@ In this final section, we'll return to the linear probe from earlier, but discus
 
 We won't be doing a full-scale training run here, instead we'll just look at a small example involving the `board_seqs_int_small.npy` datasets we've already used (the actual probe we've been using in these exercises was trained using a larger `board_seqs_int.pth` dataset).
 
+Note - if you're an ARENA participant who did the material on [PyTorch Lightning](https://arena-ch0-fundamentals.streamlit.app/[0.3]_ResNets#pytorch-lightning) during the first week (or in the "transformer from scratch" material), this should all be familiar to you. If not, a little refresher:
 
-First, let's create a function which gives us the board state for each at each of the intermediate moves, in a form we can work with.
+<details>
+<summary>Click here for a basic refresher on PyTorch Lightning & Weights and Biases</summary>
 
-`seq_to_state_stack` is a function which takes in a sequence of game representations with shape `(batch, seq)` (each element represents a move in a game, the elements are integers from 0 to 63, with the central squares 27, 28, 35, 36 missed out) and returns a tensor of shape `(batch, seq, rows=8, cols=8)` where each `[i, j, :, :]`-th slice is a board state at the `j`-th move of the `i`-th game (with `+1` representing black, `-1` as white, `0` as blank).
+PyTorch Lightining (which we'll import as `pl`) is a useful tool for cleaning up and modularizing your PyTorch training code.
+
+We can define a class which inherits from `pl.LightningModule`, which will contain both our model and instructions for what the training steps look like. This class should have at minimum the following 2 methods:
+
+* `training_step` - compute and return the training loss on a single batch (plus optionally log metrics)
+* `configure_optimizers` - return the optimizers you want to use for training
+
+You can also include the `validation_step` method which has the same syntax as training step and gets called once per epoch, but we won't worry about that here.
+
+Once you have your class, you need to take the following steps to run your training loop:
+
+* Create an instance of that class, e.g. `model = LitTransformer(...)`
+* Define a trainer, e.g. `trainer = pl.Trainer(max_epochs=...)`
+* Define a dataloader (i.e. of type `torch.utils.data.DataLoader`)
+* Call the method `trainer.fit(model=model, train_dataloaders=dataloader)`
+
+Weights and Biases is a useful service which visualises training runs and performs hyperparameter sweeps. If you want to log to Weights and Biases, you need to amend the following:
+
+* Define `logger = pl.loggers.WandbLogger(save_dir=..., project=...)`, and pass this to your `Trainer` instance (along with the `log_every_n_steps` argument).
+* Remember to call `wandb.finish()` at the end of your training instance.
+</details>
+
+One important thing to make clear: we're not training our model in the standard way here. If this was a standard training loop, we'd run our model in training mode and update its gradients in a way which reduces the cross entropy loss between its logit output and the true black/white/blank labels. Instead, we're **running our model in inference mode, caching its residual stream values, applying our probe to these values, and then updating the weights of our probe in a way which reduces the cross entropy loss between our probe's output and the true mine/theirs/blank labels.**
 
 
 ```python
-def seq_to_state_stack(str_moves):
-    if isinstance(str_moves, t.Tensor):
-        str_moves = str_moves.tolist()
-    board = OthelloBoardState()
-    states = []
-    for move in str_moves:
-        board.umpire(move)
-        states.append(np.copy(board.state))
-    states = np.stack(states, axis=0)
-    return states
-
-
-
-if MAIN:
-    state_stack = t.tensor(
-        np.stack([seq_to_state_stack(seq) for seq in board_seqs_string[:50, :-1]])
-    )
-    print(state_stack.shape)
-    
-    # Visualize the first 8 moves
-    imshow(state_stack[0, :8], facet_col=0, height=300)
-
+imshow(
+    focus_states[0, :16],
+    facet_col=0,
+    facet_col_wrap=8,
+    facet_labels=[f"Move {i}" for i in range(1, 17)],
+    title="First 16 moves of first game",
+    color_continuous_scale="Greys",
+)
 ```
 
-Now, we'll create a **dataclass** to store our probe training args. This is a great way to keep all our variables in one place (and also it works well with VSCode's autocompletion features!).
+Now, we'll create a **dataclass** to store our probe training args. This is a great way to keep all our variables in one place (and also it works well with VSCode's autocompletion features!). Also, note a cool feature of dataclasses - you can define attributes in terms of previous attributes (e.g. see the `length` attribute).
 
 We've also included a `setup_linear_probe` method, which will give us a randomly initialized probe with appropriately normalized weights.
 
@@ -2047,6 +2502,7 @@ class ProbeTrainingArgs():
     pos_start: int = 5
     pos_end: int = model.cfg.n_ctx - 5
     length: int = pos_end - pos_start
+    alternating: Tensor = t.tensor([1 if i%2 == 0 else -1 for i in range(length)], device=device)
 
     # Game state (options are blank/mine/theirs)
     options: int = 3
@@ -2068,9 +2524,6 @@ class ProbeTrainingArgs():
 
     # The first mode is blank or not, the second mode is next or prev GIVEN that it is not blank
     modes = 3
-    def __post_init__(self):
-        self.alternating = t.tensor([1 if i%2 == 0 else -1 for i in range(self.length)], device=device)
-        self.logger = CSVLogger(save_dir=os.getcwd() + "/logs", name=self.probe_name)
 
     # Code to get randomly initialized probe
     def setup_linear_probe(self, model: HookedTransformer):
@@ -2096,17 +2549,28 @@ If you've not already come across PyTorch Lightning, then here's a quick summary
 
 ### Exercise - fill in the missing code below
 
+```c
+Difficulty: 🟠🟠🟠🟠⚪
+Importance: 🟠🟠🟠⚪⚪
+
+You should spend up to 30-40 minutes on this exercise.
+
+There are several steps to this exercise, so after trying for some time you're recommended to look at the solution.
+```
+
 We've just left the `training_step` function incomplete, so that's the one you need to fill in.
 
-The `state_stack_one_hot` object has shape `(batch_size, seq_pos, rows=8, cols=8, options=3)` and represents the board state at each move (with the basis dimensions representing "empty", "their" and "my" respectively). Your function should:
+The `batch` object in your training step is a tuple of `(games_int, state_stack_one_hot)`. The `games_int` object has shape `(batch_size=256, full_game_len=60)`, and is the thing you feed into your model. The `state_stack_one_hot` object has shape `(batch_size=256, game_len, rows=8, cols=8, options=3)`, and used when calculating your loss (i.e. it's the correct labels for your game, but in one-hot format). Note that `game_len` is less than `full_game_len=60`, because we're removing the first and last 5 games.
 
 * Run the model in inference mode, and get the residual stream (post attn and MLP).
     * Note - remember to only use `games_int[:, :-1]` as input, since we don't have a label for the final move.
-    * Hint - you might want to use the `name_filter` argument of `run_with_cache` so you only get `resid_post`.
+        * Hint - you might want to use the `name_filter` argument of `run_with_cache` so you only get `resid_post`.
+    * Also, we only want to take the slice `pos_start: pos_end` of the cached values.
 * Take the batched inner product of the vectors in the residual stream with the linear probe values (you'll need `einops` for this).
     * The result should be a tensor of shape `(modes=3, batch, seq_pos, rows=8, cols=8, options=3)`.
 * Convert this tensor of logits into a tensor of log probabilities (over `options=3`).
-* Multiply this tensor by `state_stack_one_hot` and sum over the last dimensions (this is effectively getting us the log probability of the correct move at each position).
+* Multiply this tensor by `state_stack_one_hot` and sum over the final dimensions (the `options` dimension).
+    * This is equivalent to indexing along the `options` dimension to choose the log prob corresponding to the correct move (remember that cross entropy loss is negative log prob).
 * Take the mean over the batch dimension.
 * Calculate `loss_even`, `loss_odd` and `loss_all`.
     * These are the average negative log probs for the correct move, for each of the three modes: even moves, odd moves, and all moves aggregated.
@@ -2117,6 +2581,18 @@ Once you've finished implementing this function, you can run the code below. You
 
 
 ```python
+def seq_to_state_stack(str_moves):
+    board = OthelloBoardState()
+    states = []
+    for move in str_moves:
+        board.umpire(move)
+        states.append(np.copy(board.state))
+    states = np.stack(states, axis=0)
+    return states
+
+```
+
+```python
 class LitLinearProbe(pl.LightningModule):
     def __init__(self, model: HookedTransformer, args: ProbeTrainingArgs):
         super().__init__()
@@ -2125,21 +2601,35 @@ class LitLinearProbe(pl.LightningModule):
         self.linear_probe = args.setup_linear_probe(model)
         pl.seed_everything(42, workers=True)
 
-    def training_step(self, batch: Tuple[t.Tensor, t.Tensor], batch_idx: int) -> t.Tensor:
+    def training_step(self, batch: Int[Tensor, "game_idx"], batch_idx: int) -> t.Tensor:
 
         games_int = board_seqs_int[batch.cpu()]
         games_str = board_seqs_string[batch.cpu()]
-        state_stack = t.stack([t.tensor(seq_to_state_stack(game_str)) for game_str in games_str])
+        state_stack = t.stack([t.tensor(seq_to_state_stack(game_str.tolist())) for game_str in games_str])
         state_stack = state_stack[:, self.args.pos_start: self.args.pos_end, :, :]
         state_stack_one_hot = state_stack_to_one_hot(state_stack).to(device)
+        batch_size = self.args.batch_size
+        game_len = self.args.length
+
+        # games_int = tensor of game sequences, each of length 60
+        # This is the input to our model
+        assert isinstance(games_int, Int[Tensor, f"batch={batch_size} full_game_len=60"])
+
+        # state_stack_one_hot = tensor of one-hot encoded states for each game
+        # We'll multiply this by our probe's estimated log probs along the `options` dimension, to get probe's estimated log probs for the correct option
+        assert isinstance(state_stack_one_hot, Int[Tensor, f"batch={batch_size} game_len={game_len} rows=8 cols=8 options=3"])
 
         pass
 
     def train_dataloader(self):
+        '''
+        Returns `games_int` and `state_stack_one_hot` tensors.
+        '''
         n_indices = self.args.num_games - (self.args.num_games % self.args.batch_size)
         full_train_indices = t.randperm(self.args.num_games)[:n_indices]
-        full_train_indices = einops.rearrange(full_train_indices, "(i j) -> i j", j=self.args.batch_size)
+        full_train_indices = einops.rearrange(full_train_indices, "(batch_idx game_idx) -> batch_idx game_idx", game_idx=self.args.batch_size)
         return full_train_indices
+        
 
     def configure_optimizers(self):
         optimizer = t.optim.AdamW([self.linear_probe], lr=self.args.lr, betas=self.args.betas, weight_decay=self.args.wd)
@@ -2160,13 +2650,23 @@ class LitLinearProbe(pl.LightningModule):
         self.linear_probe = args.setup_linear_probe(model)
         pl.seed_everything(42, workers=True)
 
-    def training_step(self, batch: Tuple[t.Tensor, t.Tensor], batch_idx: int) -> t.Tensor:
+    def training_step(self, batch: Int[Tensor, "game_idx"], batch_idx: int) -> t.Tensor:
 
         games_int = board_seqs_int[batch.cpu()]
         games_str = board_seqs_string[batch.cpu()]
-        state_stack = t.stack([t.tensor(seq_to_state_stack(game_str)) for game_str in games_str])
+        state_stack = t.stack([t.tensor(seq_to_state_stack(game_str.tolist())) for game_str in games_str])
         state_stack = state_stack[:, self.args.pos_start: self.args.pos_end, :, :]
         state_stack_one_hot = state_stack_to_one_hot(state_stack).to(device)
+        batch_size = self.args.batch_size
+        game_len = self.args.length
+
+        # games_int = tensor of game sequences, each of length 60
+        # This is the input to our model
+        assert isinstance(games_int, Int[Tensor, f"batch={batch_size} full_game_len=60"])
+
+        # state_stack_one_hot = tensor of one-hot encoded states for each game
+        # We'll multiply this by our probe's estimated log probs along the `options` dimension, to get probe's estimated log probs for the correct option
+        assert isinstance(state_stack_one_hot, Int[Tensor, f"batch={batch_size} game_len={game_len} rows=8 cols=8 options=3"])
 
         # SOLUTION
         with t.inference_mode():
@@ -2198,10 +2698,14 @@ class LitLinearProbe(pl.LightningModule):
         return loss
 
     def train_dataloader(self):
+        '''
+        Returns `games_int` and `state_stack_one_hot` tensors.
+        '''
         n_indices = self.args.num_games - (self.args.num_games % self.args.batch_size)
         full_train_indices = t.randperm(self.args.num_games)[:n_indices]
-        full_train_indices = einops.rearrange(full_train_indices, "(i j) -> i j", j=self.args.batch_size)
+        full_train_indices = einops.rearrange(full_train_indices, "(batch_idx game_idx) -> batch_idx game_idx", game_idx=self.args.batch_size)
         return full_train_indices
+        
 
     def configure_optimizers(self):
         optimizer = t.optim.AdamW([self.linear_probe], lr=self.args.lr, betas=self.args.betas, weight_decay=self.args.wd)
@@ -2212,64 +2716,64 @@ class LitLinearProbe(pl.LightningModule):
 
 ```python
 # Create the model & training system
+args = ProbeTrainingArgs()
+litmodel = LitLinearProbe(model, args)
 
-if MAIN:
-    args = ProbeTrainingArgs()
-    litmodel = LitLinearProbe(model, args)
-    
-    # Get dataloader(s)
-    trainloader = litmodel.train_dataloader()
-    
-    # Train the model
-    trainer = pl.Trainer(
-        max_epochs=litmodel.args.max_epochs,
-        logger=litmodel.args.logger,
-        log_every_n_steps=1,
-    )
-    trainer.fit(model=litmodel)
+# You can choose either logger
+logger = CSVLogger(save_dir=os.getcwd() + "/logs", name=args.probe_name)
+# logger = WandbLogger(save_dir=os.getcwd() + "/logs", project=args.probe_name)
 
+# Train the model
+trainer = pl.Trainer(
+    max_epochs=args.max_epochs,
+    logger=logger,
+    log_every_n_steps=1,
+)
+trainer.fit(model=litmodel)
 ```
 
 Finally, let's perform the same accuracy plot from before, and see how well it works.
 
 
 ```python
+black_to_play_index = 0
+white_to_play_index = 1
+blank_index = 0
+their_index = 1
+my_index = 2
 
-if MAIN:
-    black_to_play_index = 0
-    white_to_play_index = 1
-    blank_index = 0
-    their_index = 1
-    my_index = 2
-    
-    # Creating values for linear probe (converting the "black/white to play" notation into "me/them to play")
-    my_linear_probe = t.zeros(cfg.d_model, rows, cols, options, device=device)
-    my_linear_probe[..., blank_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 0] + litmodel.linear_probe[white_to_play_index, ..., 0])
-    my_linear_probe[..., their_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 1] + litmodel.linear_probe[white_to_play_index, ..., 2])
-    my_linear_probe[..., my_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 2] + litmodel.linear_probe[white_to_play_index, ..., 1])
-    
-    probe_out = einops.einsum(
-        focus_cache["resid_post", 6], my_linear_probe, # linear_probe
-        "game move d_model, d_model row col options -> game move row col options"
-    )
-    probe_out_value = probe_out.argmax(dim=-1)
-    
-    correct_middle_odd_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5:2]
-    accuracies_odd = einops.reduce(correct_middle_odd_answers.float(), "game move row col -> row col", "mean")
-    
-    correct_middle_answers = (probe_out_value.cpu() == focus_states_flipped_value[:, :-1])[:, 5:-5]
-    accuracies = einops.reduce(correct_middle_answers.float(), "game move row col -> row col", "mean")
-    
-    plot_square_as_board(
-        1 - t.stack([accuracies_odd, accuracies], dim=0), 
-        title="Average Error Rate of Linear Probe", 
-        facet_col=0, facet_labels=["Black to Play moves", "All Moves"], 
-        zmax=0.25, zmin=-0.25
-    )
+# Creating values for linear probe (converting the "black/white to play" notation into "me/them to play")
+my_linear_probe = t.zeros(cfg.d_model, rows, cols, options, device=device)
+my_linear_probe[..., blank_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 0] + litmodel.linear_probe[white_to_play_index, ..., 0])
+my_linear_probe[..., their_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 1] + litmodel.linear_probe[white_to_play_index, ..., 2])
+my_linear_probe[..., my_index] = 0.5 * (litmodel.linear_probe[black_to_play_index, ..., 2] + litmodel.linear_probe[white_to_play_index, ..., 1])
 
+# Getting the probe's output, and then its predictions
+probe_out = einops.einsum(
+    focus_cache["resid_post", 6], my_linear_probe,
+    "game move d_model, d_model row col options -> game move row col options"
+)
+probe_out_value = probe_out.argmax(dim=-1)
+
+# Getting the correct answers in the odd cases
+correct_middle_odd_answers = (probe_out_value == focus_states_flipped_value[:, :-1])[:, 5:-5:2]
+accuracies_odd = einops.reduce(correct_middle_odd_answers.float(), "game move row col -> row col", "mean")
+
+# Getting the correct answers in all cases
+correct_middle_answers = (probe_out_value == focus_states_flipped_value[:, :-1])[:, 5:-5]
+accuracies = einops.reduce(correct_middle_answers.float(), "game move row col -> row col", "mean")
+
+plot_square_as_board(
+    1 - t.stack([accuracies_odd, accuracies], dim=0), 
+    title="Average Error Rate of Linear Probe", 
+    facet_col=0, facet_labels=["Black to Play moves", "All Moves"], 
+    zmax=0.25, zmin=-0.25
+)
 ```
 
-If you did this correctly, you should get comparable performance to the original probes we used above. Can you reproduce some of our results with the probes you trained? Can you find any interesting neurons, and figure out what they're doing?
+If you did this correctly, you should get comparable performance to the original probes we used above (maybe not quite as good, depending on how long you trained for). As a reference, when I trained according to the default values in `args`, my loss came down to about 38 (starting at 300) and error rate was below 5% everywhere (and was largest on the edges and corners).
+
+With your trained probe, can you reproduce some of our results with the probes you trained? Can you find any interesting neurons, and figure out what they're doing?
 
 
 
@@ -2277,7 +2781,7 @@ If you did this correctly, you should get comparable performance to the original
 """, unsafe_allow_html=True)
 
 
-def section_4():
+def section_5():
 
     st.sidebar.markdown(r"""
 
@@ -2298,7 +2802,7 @@ def section_4():
         <li><a class='contents-el' href='#preliminary-results-on-neuron-interpretability'>Preliminary Results On Neuron Interpretability</a></li>
     </ul></li>
     <li class='margtop'><a class='contents-el' href='#a-transformer-circuit-laboratory'>A Transformer Circuit Laboratory</a></li>
-    <li class='margtop'><a class='contents-el' href='#where-to-start?'>Where to start?</a></li>
+    <li class='margtop'><a class='contents-el' href='#where-to-start'>Where to start?</a></li>
     <li><ul class="contents">
         <li><a class='contents-el' href='#concrete-starter-projects'>Concrete starter projects</a></li>
         <li><a class='contents-el' href='#cleaning-up'>Cleaning Up</a></li>
@@ -2477,7 +2981,7 @@ As argued earlier, I think that the current biggest open problem in transformer 
 
 What could progress on understanding MLPs in general look like? I think that we both need to get practice just studying MLP layers, and that we need to form clearer conceptual frameworks. A lot of our intuitions about transformer neurons come from image models, where neurons seem to (mostly?) represent features, have ReLU activations, and seem to be doing fairly discrete kinds of logic, eg "if car wheel present and car body present and car window present (in the right places) -> it's a car".
 
-![](https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/qgK7smTvJ4DB8rZ6h/ze4jai5ioub31ovgewdj)
+<img src="https://res.cloudinary.com/lesswrong-2-0/image/upload/f_auto,q_auto/v1/mirroredImages/qgK7smTvJ4DB8rZ6h/ze4jai5ioub31ovgewdj" width="800">
 
 Transformers are different in a bunch of ways - there's attention layers, there's a residual stream (with significantly smaller dimension than the number of neurons in each layer!), and smoother and weirder GELU activations. Most importantly, polysemanticity seem to be a much bigger deal - single neurons often represent multiple features rather than a feature per neuron - and we think this is because models are using superposition - they represent features as linear combinations of neurons and use this to compress in more features than they have dimensions. This was argued for pretty convincingly in [Toy Models of Superposition](https://transformer-circuits.pub/2022/toy_model/index.html), but their insights were derived from a toy model, which can easily be misleading. I'm not aware of any work so far exhibiting superposition or properly testing the predictions of that paper in a real model. I expect some ideas will transfer but some will break, and that I'll learn a lot from seeing which is which!
 
@@ -2662,7 +3166,7 @@ This was (deliberately!) a pretty rushed and shallow investigation, and I cut a 
 
 
 func_page_list = [
-    (section_0, "🏠 Home"),     (section_1, "2️⃣ Looking for modular circuits"),     (section_2, "3️⃣ Neuron Interpretability: A Deep Dive"),     (section_3, "4️⃣ Training a Probe"),     (section_4, "5️⃣ Bonus - Future Work I'm Excited about"), 
+    (section_0, "🏠 Home"),     (section_1, "1️⃣ Model Setup & Linear Probes"),     (section_2, "2️⃣ Looking for modular circuits"),     (section_3, "3️⃣ Neuron Interpretability: A Deep Dive"),     (section_4, "4️⃣ Training a Probe"),     (section_5, "5️⃣ Bonus - Future Work I'm Excited about"), 
 ]
 
 func_list = [func for func, page in func_page_list]
