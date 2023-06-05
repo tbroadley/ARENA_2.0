@@ -614,7 +614,7 @@ if MAIN:
 
 def negative_back(grad_out: Arr, out: Arr, x: Arr) -> Arr:
     '''Backward function for f(x) = -x elementwise.'''
-    return -grad_out
+    return unbroadcast(-grad_out, x)
 
 
 if MAIN:
@@ -626,7 +626,7 @@ if MAIN:
 # %%
 
 def exp_back(grad_out: Arr, out: Arr, x: Arr) -> Arr:
-    return grad_out * np.exp(x)
+    return grad_out * out
 
 if MAIN:
     exp = wrap_forward_fn(np.exp)
@@ -637,7 +637,7 @@ if MAIN:
 # %%
 
 def reshape_back(grad_out: Arr, out: Arr, x: Arr, new_shape: tuple) -> Arr:
-    return grad_out.reshape(x.shape)
+    return np.reshape(grad_out, x.shape)
 
 
 if MAIN:
@@ -766,7 +766,7 @@ def getitem_back(grad_out: Arr, out: Arr, x: Arr, index: Index):
     This function works just like a[indices] += b, except that it allows for repeated indices.
     '''
     index = coerce_index(index)
-    result = np.zeros_like(x)
+    result = np.full_like(x, 0)
     np.add.at(result, index, grad_out)
     return result
 
@@ -792,8 +792,8 @@ if MAIN:
     BACK_FUNCS.add_back_func(np.add, 1, lambda grad_out, out, x, y: unbroadcast(grad_out, y))
     BACK_FUNCS.add_back_func(np.subtract, 0, lambda grad_out, out, x, y: unbroadcast(grad_out, x))
     BACK_FUNCS.add_back_func(np.subtract, 1, lambda grad_out, out, x, y: unbroadcast(-grad_out, y))
-    BACK_FUNCS.add_back_func(np.true_divide, 0, lambda grad_out, out, x, y: unbroadcast(grad_out / y, x))
-    BACK_FUNCS.add_back_func(np.true_divide, 1, lambda grad_out, out, x, y: unbroadcast(-grad_out * x / y**2, y))
+    BACK_FUNCS.add_back_func(np.true_divide, 0, lambda grad_out, out, x, y: unbroadcast(grad_out/y, x))
+    BACK_FUNCS.add_back_func(np.true_divide, 1, lambda grad_out, out, x, y: unbroadcast(grad_out*(-x/y**2), y))
 
 # %%
 
@@ -1213,7 +1213,7 @@ if MAIN:
     start = time.time()
     train_loss_list = []
     test_loss_list = []
-    optimizer = SGD(model.parameters(), 0.001)
+    optimizer = SGD(model.parameters(), 0.01)
     for epoch in range(num_epochs):
         train(model, train_loader, optimizer, epoch, train_loss_list)
         test(model, test_loader, test_loss_list)
