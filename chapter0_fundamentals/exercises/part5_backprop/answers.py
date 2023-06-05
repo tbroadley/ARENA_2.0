@@ -862,18 +862,18 @@ def maximum_back0(grad_out: Arr, out: Arr, x: Arr, y: Arr):
     # For elements of x that are equal to the maximum, the gradient is 1.
     # For elements of x that are not equal to the maximum, the gradient is 0.
     # Go element by element and compute the gradient.
-    grad_x = np.zeros_like(grad_out, dtype=np.float64)
+    grad_x = np.full_like(grad_out, 0)
     grad_x[x == out] = 1.0
     grad_x[x == y] = 0.5
-    return unbroadcast(grad_x, x)
+    return unbroadcast(grad_x * grad_out, x)
     
 
 def maximum_back1(grad_out: Arr, out: Arr, x: Arr, y: Arr):
     '''Backwards function for max(x, y) wrt y.'''
-    grad_y = np.zeros_like(grad_out, dtype=np.float64)
+    grad_y = np.full_like(grad_out, 0)
     grad_y[y == out] = 1.0
     grad_y[y == x] = 0.5
-    return unbroadcast(grad_y, y)
+    return unbroadcast(grad_y * grad_out, y)
 
 
 if MAIN:
@@ -1208,7 +1208,7 @@ def test(model: MLP, test_loader: DataLoader, test_loss_list: Optional[list] = N
 # %%
 
 if MAIN:
-    num_epochs = 1
+    num_epochs = 5
     model = MLP()
     start = time.time()
     train_loss_list = []
