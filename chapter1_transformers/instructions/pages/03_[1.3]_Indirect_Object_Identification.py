@@ -147,7 +147,7 @@ This is a fine first-pass understanding of how the circuit works. A few other fe
 <details>
 <summary>Diagram 2 (complex)</summary>
 
-<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/ioi-main-full-d.png" width="1250">
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/ioi-main-full-corrected.png" width="1250">
 
 </details>
 
@@ -296,7 +296,7 @@ model = HookedTransformer.from_pretrained(
 
 This argument means we redefine the matrices $W_Q$, $W_K$, $W_V$ and $W_O$ in the model (without changing the model's actual behaviour).
 
-For example, we know that instead of working with $W_Q$ and $W_K$ individually, the only matrix we actually need to use in the model is the low-rank matrix $W_Q W_K^T$ (note that I'm using the convention of matrix multiplication on the right, which matches the code in transformerlens and previous exercises in this series, but doesn't match Anthropic's Mathematical Frameworks paper). So if we perform singular value decomposition $W_Q W_K^T = U S V^T$, then we see that we can just as easily define $W_Q = U \sqrt{S}$ and $W_K = $V \sqrt{S}$ and use these instead. This means that $W_Q$ and $W_K$ both have orthogonal columns with matching norms. You can investigate this yourself (e.g. using the code below). This is arguably a more interpretable setup, because now there's no obvious asymmetry between the keys and queries.
+For example, we know that instead of working with $W_Q$ and $W_K$ individually, the only matrix we actually need to use in the model is the low-rank matrix $W_Q W_K^T$ (note that I'm using the convention of matrix multiplication on the right, which matches the code in transformerlens and previous exercises in this series, but doesn't match Anthropic's Mathematical Frameworks paper). So if we perform singular value decomposition $W_Q W_K^T = U S V^T$, then we see that we can just as easily define $W_Q = U \sqrt{S}$ and $W_K = V \sqrt{S}$ and use these instead. This means that $W_Q$ and $W_K$ both have orthogonal columns with matching norms. You can investigate this yourself (e.g. using the code below). This is arguably a more interpretable setup, because now there's no obvious asymmetry between the keys and queries.
 
 There's also some fiddlyness with how biases are handled in this factorisation, which is why the comments above don't hold absolutely (see the documnentation for more info).
 
@@ -635,7 +635,7 @@ $$
 Combining these, we get:
 
 $$
-L_i = \log \frac{e^{x_i}}{\sum_{j=1}^n e^{x_j}} = x_i - \log \sum_{j=1}^n e^{x_j}
+L_i = \log \frac{e^{x_i}}{\sum_{k=1}^n e^{x_k}} = x_i - \log \sum_{k=1}^n e^{x_k}
 $$
 
 Notice that the sum term on the right hand side is the same for all $i$, so we get:
@@ -837,7 +837,7 @@ Once you have the solution, you can plot your results.
 Key for the plot below: `n_pre` means the residual stream at the start of layer n, `n_mid` means the residual stream after the attention part of layer n (`n_post` is the same as `n+1_pre` so is not included)
 
 * `layer` is the layer for which we input the residual stream (this is used to identify *which* layer norm scaling factor we want)
-* `incl_mid` is whether to include the residual stream in the middle of a layer, ie after attention & before MLP
+* `incl_mid` is whether to include the residual stream in the middle of a layer, i.e. after attention & before MLP
 * `pos_slice` is the subset of the positions used. See `utils.Slice` for details on the syntax.
 * `return_labels` is whether to return the labels for each component returned (useful for plotting)
 </details>
@@ -925,7 +925,7 @@ imshow(
 )
 ```
 
-We see that only a few heads really matter - heads 9.6 and 9.9 contribute a lot positively (explaining why attention layer 9 is so important), while heads 10.7 and 11.10 contribute a lot negatively (explaining why attention layer 10 and layer 11 are actively harmful). These correspond to (some of) the name movers and negative name movers discussed in the paper. There are also several heads that matter positively or negatively but less strongly (other name movers and backu name movers)
+We see that only a few heads really matter - heads 9.6 and 9.9 contribute a lot positively (explaining why attention layer 9 is so important), while heads 10.7 and 11.10 contribute a lot negatively (explaining why attention layer 10 and layer 11 are actively harmful). These correspond to (some of) the name movers and negative name movers discussed in the paper. There are also several heads that matter positively or negatively but less strongly (other name movers and backup name movers)
 
 There are a few meta observations worth making here - our model has 144 heads, yet we could localise this behaviour to a handful of specific heads, using straightforward, general techniques. This supports the claim in [A Mathematical Framework](https://transformer-circuits.pub/2021/framework/index.html) that attention heads are the right level of abstraction to understand attention. It also really surprising that there are *negative* heads - eg 10.7 makes the incorrect logit 7x *more* likely. I'm not sure what's going on there, though the paper discusses some possibilities.
 
@@ -1045,6 +1045,15 @@ You're taking the mean over 8 sentences: 4 with an `ABA` structure (i.e. `"When 
 This is a good lesson in making sure you're aware of what it is you're plotting!
 </details>
 
+**Question** - for your top 3 positive logit attribution heads, you should see `" gave"` also attending to `" Mary"`. Can you guess why?
+
+<details>
+<summary>Answer</summary>
+
+This is (probably) also the IOI circuit in action! These heads are attending to `" Mary"` because they're completing the sentence "When John and Mary went to the store, John gave Mary..."`. This requires the same algorithm - identifying the indirect object in the sentence, and then predicting it as the next token.
+
+Also note that the comma is attending to both John and Mary - this is probably because either name following the comma is a logical continuation of the sentence.
+</details>
 
 """, unsafe_allow_html=True)
 
@@ -1100,9 +1109,11 @@ The obvious limitation to the techniques used above is that they only look at th
 
 The technique we'll use to investigate this is called **activation patching**. This was first introduced in [David Bau and Kevin Meng's excellent ROME paper](https://rome.baulab.info/), there called causal tracing.
 
-The setup of activation patching is to take two runs of the model on two different inputs, the clean run and the corrupted run. The clean run outputs the correct answer and the corrupted run does not. The key idea is that we give the model the corrupted input, but then **intervene** on a specific activation and **patch** in the corresponding activation from the clean run (ie replace the corrupted activation with the clean activation), and then continue the run. And we then measure how much the output has updated towards the correct answer.
+The setup of activation patching is to take two runs of the model on two different inputs, the clean run and the corrupted run. The clean run outputs the correct answer and the corrupted run does not. The key idea is that we give the model the corrupted input, but then **intervene** on a specific activation and **patch** in the corresponding activation from the clean run (i.e. replace the corrupted activation with the clean activation), and then continue the run. And we then measure how much the output has updated towards the correct answer.
 
 We can then iterate over many possible activations and look at how much they affect the corrupted run. If patching in an activation significantly increases the probability of the correct answer, this allows us to *localise* which activations matter.
+
+In other words, this is a **noising** algorithm (unlike last section which was mostly **denoising**).
 
 The ability to localise is a key move in mechanistic interpretability - if the computation is diffuse and spread across the entire model, it is likely much harder to form a clean mechanistic story for what's going on. But if we can identify precisely which parts of the model matter, we can then zoom in and determine what they represent and how they connect up with each other, and ultimately reverse engineer the underlying circuit that they represent.
 
@@ -1219,6 +1230,15 @@ Fill in the function `ioi_metric` below, to create the required metric. Note tha
 
 **Important note** - this function needs to return a scalar tensor, rather than a float. If not, then some of the patching functions later on won't work. The type signature of this is `Float[Tensor, ""]`.
 
+**Second important note** - we've defined this to be 0 when performance is the same as on corrupted input, and 1 when it's the same as on clean input. Why have we done it this way around? The answer is that, in this section, we'll be applying **denoising** rather than **noising** methods. **Denoising** means we start with the corrupted input (i.e. no signal, or negative signal) and patch in with the clean input (i.e. positive signal). This is an important conceptual distinction. When we perform denoising, we're looking for parts of the model which are **sufficient** for the task (e.g. which parts of the model have enough information to recover the correct answer from the corrupted input). We might say that our "null hypothesis" is that a part of the model isn't important, and so changing its value won't get us from corrupted to clean values. On the other hand, **noising** means taking a clean run and patching in with corrupted values, and it tests whether a component is **necessary**. Our "null hypothesis" that the component isn't important now has a different implication - replacing its values with those on the corrupted input won't prevent the model from being able to perform the task. In this section, we'll be doing denoising (i.e. starting with corrupted values and patching in with clean values). In later sections, we'll be doing noising, and we'll define a new metric function for this.
+
+<details>
+<summary>More on noising vs. denoising</summary>
+
+Although algorithms like activation and path patching generally use noising, it has some problems relative to denoising.
+
+The results of denoising are much stronger, because showing that a component or set of components is sufficient for a task is a big deal. On the other hand, the complexity of transformers and interdependence of components means that noising a model can have unpredictable consequences. If loss goes up when we ablate a component, it doesn't necessarily mean that this component was necessary for the task. As an example, ablating MLP0 in gpt2-small seems to make performance much worse on basically any task (because it acts as a kind of extended embedding; more on this later in these exercises), but it's not doing anything important which is *specfic* for the IOI task.
+</details>
 
 ```python
 def ioi_metric(
@@ -1397,7 +1417,7 @@ def get_act_patch_resid_pre(
     # SOLUTION
     model.reset_hooks()
     seq_len = corrupted_tokens.size(1)
-    results = t.zeros(model.cfg.n_layers, seq_len, device="cuda", dtype=t.float32)
+    results = t.zeros(model.cfg.n_layers, seq_len, device=device, dtype=t.float32)
 
     for layer in tqdm(range(model.cfg.n_layers)):
         for position in range(seq_len):
@@ -1492,7 +1512,7 @@ def get_act_patch_block_every(
     corrupted_tokens: Float[Tensor, "batch pos"], 
     clean_cache: ActivationCache, 
     patching_metric: Callable[[Float[Tensor, "batch pos d_vocab"]], float]
-) -> Float[Tensor, "layer pos"]:
+) -> Float[Tensor, "3 layer pos"]:
     '''
     Returns an array of results of patching each position at each layer in the residual
     stream, using the value from the clean cache.
@@ -1503,9 +1523,6 @@ def get_act_patch_block_every(
     pass
 
 
-```
-
-```python
 act_patch_block_every_own = get_act_patch_block_every(model, corrupted_tokens, clean_cache, ioi_metric)
 
 t.testing.assert_close(act_patch_block_every, act_patch_block_every_own)
@@ -1541,7 +1558,7 @@ def get_act_patch_block_every(
     '''
     # SOLUTION
     model.reset_hooks()
-    results = t.zeros(3, model.cfg.n_layers, tokens.size(1), device="cuda", dtype=t.float32)
+    results = t.zeros(3, model.cfg.n_layers, tokens.size(1), device=device, dtype=t.float32)
 
     for component_idx, component in enumerate(["resid_pre", "attn_out", "mlp_out"]):
         for layer in tqdm(range(model.cfg.n_layers)):
@@ -1696,7 +1713,7 @@ def get_act_patch_attn_head_out_all_pos(
     '''
     # SOLUTION
     model.reset_hooks()
-    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device=device, dtype=t.float32)
 
     for layer in tqdm(range(model.cfg.n_layers)):
         for head in range(model.cfg.n_heads):
@@ -1845,7 +1862,7 @@ def get_act_patch_attn_head_all_pos_every(
     called on the model's logit output.
     '''
     # SOLUTION
-    results = t.zeros(5, model.cfg.n_layers, model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(5, model.cfg.n_layers, model.cfg.n_heads, device=device, dtype=t.float32)
     # Loop over each component in turn
     for component_idx, component in enumerate(["z", "q", "k", "v", "pattern"]):
         for layer in tqdm(range(model.cfg.n_layers)):
@@ -1928,7 +1945,7 @@ OK, let's zoom out and reconsolidate. Here's a recap of the most important obser
 
 <br>
 
-* All the action is on `S2` until layer 7 and then transitions to `END`. And that attention layers matter a lot, MLP layers not so much (apart from MLP0, likely as an extended embedding).
+* All the action is on `S2` until layer 7 and then transitions to `END`. And that attention layers matter a lot, MLP layers not so much (apart from MLP0, likely as an [extended embedding](https://www.lesswrong.com/s/yivyHaCAmMJ3CqSyj/p/XNjRwEX9kxbpzWFWd#:~:text=GPT%2D2%20Small%E2%80%99s%20performance%20is%20ruined%20if%20you%20ablate%20MLP0)).
     * We discovered this by doing **activation patching** on `resid_pre`, `attn_out`, and `mlp_out`.
     * <span style="color:darkorange">**This suggests that there is a cluster of heads in layers 7 & 8, which move information from `S2` to `END`. We deduce that this information is how heads `9.9`, `9.6` and `10.0` know to attend to `IO`.**</span>
     * The question then becomes *"what is this information, how does it end up in the `S2` token, and how does `END` know to attend to it?"*
@@ -2124,9 +2141,7 @@ def make_table(cols, colnames, title="", n_rows=5, decimals=4):
         table.add_row(*list(map(f, row)))
     rprint(table)
 
-```
 
-```python
 make_table(
     colnames = ["IOI prompt", "IOI subj", "IOI indirect obj", "ABC prompt"],
     cols = [
@@ -2243,11 +2258,11 @@ Terminology note - we call head $D$ the **sender node**, and head $G$ the **rece
 
 Let's make this concrete, and take a simple 3-layer transformer with 2 heads per layer. Let's perform path patching on the edge from head `0.0` to `2.0` (terminology note: `0.0` is the **sender**, and `2.0` is the **receiver**). Note that here, we're considering "direct paths" as anything that doesn't go through another attention head (so it can go through any combination of MLPs). Intuitively, the nodes (attention heads) are the only things that can move information around in the model, and this is the thing we want to study. In contrast, MLPs just perform information processing, and they're not as interesting for this task.
 
-Our 3-step process (reading from right to left) looks like:
+Our 3-step process looks like the diagram below (remember green is corrupted, grey is clean).
 
-<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/path-patching-alg-transformers-4.png" width="700">
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/path-patching-alg-transformers-6.png" width="700">
 
-(Note - in this diagram, the uncoloured nodes indicate we aren't doing any patching; we're just allowing them to be computed from the values of nodes which are downstream of it.)
+(Note - in this diagram, the uncoloured nodes indicate we aren't doing any patching; we're just allowing them to be computed from the values of nodes which are upstream of it.)
 
 
 Why does this work? If you stare at the middle picture above for long enough, you'll realise that the contribution from every non-direct path from `0.0` $\to$ `2.0` is the same as it would be on the clean distribution, while all the direct paths' contributions are the same as they would be on the corrupted distribution. 
@@ -2354,7 +2369,7 @@ def get_path_patch_head_to_final_resid_post(
         tensor of metric values for every possible sender head
     '''
     model.reset_hooks()
-    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device=device, dtype=t.float32)
 
     # ========== Step 1 ==========
     # Gather activations on x_orig and x_new
@@ -2420,6 +2435,28 @@ imshow(
 
 
 ```python
+def patch_or_freeze_head_vectors(
+	orig_head_vector: Float[Tensor, "batch pos head_index d_head"],
+	hook: HookPoint, 
+	new_cache: ActivationCache,
+	orig_cache: ActivationCache,
+	head_to_patch: Tuple[int, int], 
+) -> Float[Tensor, "batch pos head_index d_head"]:
+	'''
+	This helps implement step 2 of path patching. We freeze all head outputs (i.e. set them
+	to their values in orig_cache), except for head_to_patch (if it's in this layer) which
+	we patch with the value from new_cache.
+
+	head_to_patch: tuple of (layer, head)
+		we can use hook.layer() to check if the head to patch is in this layer
+	'''
+	# Setting using ..., otherwise changing orig_head_vector will edit cache value too
+	orig_head_vector[...] = orig_cache[hook.name][...]
+	if head_to_patch[0] == hook.layer():
+		orig_head_vector[:, :, head_to_patch[1]] = new_cache[hook.name][:, :, head_to_patch[1]]
+	return orig_head_vector
+
+
 def get_path_patch_head_to_final_resid_post(
     model: HookedTransformer,
     patching_metric: Callable,
@@ -2439,7 +2476,7 @@ def get_path_patch_head_to_final_resid_post(
         tensor of metric values for every possible sender head
     '''
     model.reset_hooks()
-    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device=device, dtype=t.float32)
 
     resid_post_hook_name = utils.get_act_name("resid_post", model.cfg.n_layers - 1)
     resid_post_name_filter = lambda name: name == resid_post_hook_name
@@ -2496,25 +2533,6 @@ def get_path_patch_head_to_final_resid_post(
         results[sender_layer, sender_head] = patching_metric(patched_logits)
 
     return results
-```
-```python
-    hook: HookPoint, 
-    new_cache: ActivationCache,
-    orig_cache: ActivationCache,
-    head_to_patch: Tuple[int, int], 
-    '''
-    This helps implement step 2 of path patching. We freeze all head outputs (i.e. set them
-    to their values in orig_cache), except for head_to_patch (if it's in this layer) which
-    we patch with the value from new_cache.
-    head_to_patch: tuple of (layer, head)
-        we can use hook.layer() to check if the head to patch is in this layer
-    '''
-    # Setting using ..., otherwise changing orig_head_vector will edit cache value too
-    orig_head_vector[...] = orig_cache[hook.name][...]
-    if head_to_patch[0] == hook.layer():
-        orig_head_vector[:, :, head_to_patch[1]] = new_cache[hook.name][:, :, head_to_patch[1]]
-    return orig_head_vector
-
 ```
 </details>
 
@@ -2580,8 +2598,8 @@ def get_path_patch_head_to_heads(
     patching_metric: Callable,
     new_dataset: IOIDataset = abc_dataset,
     orig_dataset: IOIDataset = ioi_dataset,
-    new_cache: Optional[ActivationCache] = None,
-    orig_cache: Optional[ActivationCache] = None,
+    new_cache: Optional[ActivationCache] = abc_cache,
+    orig_cache: Optional[ActivationCache] = ioi_cache,
 ) -> Float[Tensor, "layer head"]:
     '''
     Performs path patching (see algorithm in appendix B of IOI paper), with:
@@ -2590,7 +2608,7 @@ def get_path_patch_head_to_heads(
         receiver node = input to a later head (or set of heads)
 
     The receiver node is specified by receiver_heads and receiver_input.
-    Example (for S-inhibition path patching the queries):
+    Example (for S-inhibition path patching the values):
         receiver_heads = [(8, 6), (8, 10), (7, 9), (7, 3)],
         receiver_input = "v"
 
@@ -2653,8 +2671,8 @@ def get_path_patch_head_to_heads(
     patching_metric: Callable,
     new_dataset: IOIDataset = abc_dataset,
     orig_dataset: IOIDataset = ioi_dataset,
-    new_cache: Optional[ActivationCache] = None,
-    orig_cache: Optional[ActivationCache] = None,
+    new_cache: Optional[ActivationCache] = abc_cache,
+    orig_cache: Optional[ActivationCache] = ioi_cache,
 ) -> Float[Tensor, "layer head"]:
     '''
     Performs path patching (see algorithm in appendix B of IOI paper), with:
@@ -2678,7 +2696,7 @@ def get_path_patch_head_to_heads(
     receiver_hook_names = [utils.get_act_name(receiver_input, layer) for layer in receiver_layers]
     receiver_hook_names_filter = lambda name: name in receiver_hook_names
 
-    results = t.zeros(max(receiver_layers), model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(max(receiver_layers), model.cfg.n_heads, device=device, dtype=t.float32)
     
     # ========== Step 1 ==========
     # Gather activations on x_orig and x_new
@@ -2961,6 +2979,7 @@ A few notes:
 
 * You can use `model.to_tokens` to convert the names to tokens. Remember to use `prepend_bos=False`, since you just want the tokens of names so you can embed them. Note that this function will treat the list of names as a batch of single-token inputs, which works fine for our purposes.
 * You can apply MLPs and layernorms as functions, by just indexing the model's blocks (e.g. use `model.blocks[i].mlp` or `model.blocks[j].ln1` as a function). Remember that `ln1` is the layernorm that comes before attention, and `ln2` comes before the MLP.
+* Remember that you need to apply MLP0 before you apply the OV matrix (which is why we omit the 0th layer in our scores). The reason for this is that ablating MLP0 has a strangely large effect in gpt2-small relative to ablating other MLPs, possibly because it's acting as an extended embedding (see [here](https://www.lesswrong.com/s/yivyHaCAmMJ3CqSyj/p/XNjRwEX9kxbpzWFWd#:~:text=GPT%2D2%20Small%E2%80%99s%20performance%20is%20ruined%20if%20you%20ablate%20MLP0) for an explanation).
 
 Also, you shouldn't expect to get exactly the same results as the paper (because some parts of this experiment have been set up very slightly different), although you probably shouldn't be off by more than 10%.
 
@@ -2970,11 +2989,13 @@ def get_copying_scores(
     model: HookedTransformer,
     k: int = 5,
     names: list = NAMES
-) -> Float[Tensor, "2 layer head"]:
+) -> Float[Tensor, "2 layer-1 head"]:
     '''
     Gets copying scores (both positive and negative) as described in page 6 of the IOI paper, for every (layer, head) pair in the model.
     
     Returns these in a 3D tensor (the first dimension is for positive vs negative).
+
+    Omits the 0th layer, because this is before MLP0 (which we're claiming acts as an extended embedding).
     '''
     pass
 
@@ -2998,7 +3019,7 @@ for i, name in enumerate(["name mover", "negative name mover"]):
         colnames=["Head", "Score"],
         cols=[
             list(map(str, heads[name])) + ["[dark_orange bold]Average"],
-            [f"{copying_results[i, layer, head]:.2%}" for (layer, head) in heads[name]] + [f"[dark_orange bold]{copying_results[i].mean():.2%}"]
+            [f"{copying_results[i, layer-1, head]:.2%}" for (layer, head) in heads[name]] + [f"[dark_orange bold]{copying_results[i].mean():.2%}"]
         ]
     )
 ```
@@ -3012,14 +3033,16 @@ def get_copying_scores(
     model: HookedTransformer,
     k: int = 5,
     names: list = NAMES
-) -> Float[Tensor, "2 layer head"]:
+) -> Float[Tensor, "2 layer-1 head"]:
     '''
     Gets copying scores (both positive and negative) as described in page 6 of the IOI paper, for every (layer, head) pair in the model.
     
     Returns these in a 3D tensor (the first dimension is for positive vs negative).
+
+    Omits the 0th layer, because this is before MLP0 (which we're claiming acts as an extended embedding).
     '''
     # SOLUTION
-    results = t.zeros((2, model.cfg.n_layers, model.cfg.n_heads), device="cuda")
+    results = t.zeros((2, model.cfg.n_layers, model.cfg.n_heads), device=device)
 
     # Define components from our model (for typechecking, and cleaner code)
     embed: Embed = model.embed
@@ -3036,7 +3059,7 @@ def get_copying_scores(
     resid_after_mlp1 = name_embeddings + mlp0(ln0(name_embeddings))
 
     # Loop over all (layer, head) pairs
-    for layer in range(model.cfg.n_layers):
+    for layer in range(1, model.cfg.n_layers):
         for head in range(model.cfg.n_heads):
 
             # Get W_OV matrix
@@ -3059,7 +3082,7 @@ def get_copying_scores(
             in_bottomk = (bottomk_logits == name_tokens).any(-1)
 
             # Fill in results
-            results[:, layer, head] = t.tensor([in_topk.float().mean(), in_bottomk.float().mean()])
+            results[:, layer-1, head] = t.tensor([in_topk.float().mean(), in_bottomk.float().mean()])
 
     return results
 ```
@@ -3183,7 +3206,7 @@ def get_attn_scores(
     else:
         raise ValueError(f"Unknown head type {head_type}")
 
-    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device="cuda", dtype=t.float32)
+    results = t.zeros(model.cfg.n_layers, model.cfg.n_heads, device=device, dtype=t.float32)
     for layer in range(model.cfg.n_layers):
         for head in range(model.cfg.n_heads):
             attn_scores: Float[Tensor, "batch head dest src"] = cache["pattern", layer]
@@ -3362,65 +3385,6 @@ where `hook_name` can be a string or a filter function mapping strings to boolea
 
 
 ```python
-
-    
-def hook_fn_mask_z(
-    z: Float[Tensor, "batch seq head d_head"],
-    hook: HookPoint,
-    heads_and_posns_to_keep: Dict[int, Bool[Tensor, "batch seq head"]],
-    means: Float[Tensor, "layer batch seq head d_head"],
-) -> Float[Tensor, "batch seq head d_head"]:
-    '''
-    Hook function which masks the z output of a transformer head.
-
-    heads_and_posns_to_keep
-        Dict created with the get_heads_and_posns_to_keep function. This tells
-        us where to mask.
-
-    means
-        Tensor of mean z values of the means_dataset over each group of prompts
-        with the same template. This tells us what values to mask with.
-    '''
-    # Get the mask for this layer, and add d_head=1 dimension so it broadcasts correctly
-    mask_for_this_layer = heads_and_posns_to_keep[hook.layer()].unsqueeze(-1).to(z.device)
-
-    # Set z values to the mean 
-    z = t.where(mask_for_this_layer, z, means[hook.layer()])
-
-    return z
-
-
-def compute_means_by_template(
-    means_dataset: IOIDataset, 
-    model: HookedTransformer
-) -> Float[Tensor, "layer batch seq head_idx d_head"]:
-    '''
-    Returns the mean of each head's output over the means dataset. This mean is
-    computed separately for each group of prompts with the same template (these
-    are given by means_dataset.groups).
-    '''
-    # Cache the outputs of every head
-    _, means_cache = model.run_with_cache(
-        means_dataset.toks.long(),
-        return_type=None,
-        names_filter=lambda name: name.endswith("z"),
-    )
-    # Create tensor to store means
-    n_layers, n_heads, d_head = model.cfg.n_layers, model.cfg.n_heads, model.cfg.d_head
-    batch, seq_len = len(means_dataset), means_dataset.max_len
-    means = t.zeros(size=(n_layers, batch, seq_len, n_heads, d_head), device=model.cfg.device)
-
-    # Get set of different templates for this data
-    for layer in range(model.cfg.n_layers):
-        z_for_this_layer: Float[Tensor, "batch seq head d_head"] = means_cache[utils.get_act_name("z", layer)]
-        for template_group in means_dataset.groups:
-            z_for_this_template = z_for_this_layer[template_group]
-            z_means_for_this_template = einops.reduce(z_for_this_template, "batch seq head d_head -> seq head d_head", "mean")
-            means[layer, template_group] = z_means_for_this_template
-
-    return means
-
-
 def add_mean_ablation_hook(
     model: HookedTransformer, 
     means_dataset: IOIDataset, 
@@ -3437,28 +3401,7 @@ def add_mean_ablation_hook(
     except for a subset of heads and sequence positions as specified by the circuit
     and seq_pos_to_keep dicts.
     '''
-    
-    model.reset_hooks(including_permanent=True)
-
-    # Compute the mean of each head's output on the ABC dataset, grouped by template
-    means = compute_means_by_template(means_dataset, model)
-    
-    # Convert this into a boolean map
-    heads_and_posns_to_keep = get_heads_and_posns_to_keep(means_dataset, model, circuit, seq_pos_to_keep)
-
-    # Get a hook function which will patch in the mean z values for each head, at 
-    # all positions which aren't important for the circuit
-    hook_fn = partial(
-        hook_fn_mask_z, 
-        heads_and_posns_to_keep=heads_and_posns_to_keep, 
-        means=means
-    )
-
-    # Apply hook
-    model.add_hook(lambda name: name.endswith("z"), hook_fn, is_permanent=is_permanent)
-
-    return model
-
+    pass
 ```
 
 To test whether your function works, you can use the function provided to you, and see if the logit difference from your implementation of the circuit matches this one:
