@@ -691,3 +691,153 @@ effective_OV_circuit = partial2 @ t.cat([model.W_O[1][4], model.W_O[1][10]], dim
 
 # Run top_1_acc on effective_OV_circuit
 print(f"Fraction of the time that the best logit is on the diagonal: {top_1_acc(effective_OV_circuit):.4f}")
+
+# %%
+
+def mask_scores(attn_scores: Float[Tensor, "query_nctx key_nctx"]):
+    '''Mask the attention scores so that tokens don't attend to previous tokens.'''
+    assert attn_scores.shape == (model.cfg.n_ctx, model.cfg.n_ctx)
+    mask = t.tril(t.ones_like(attn_scores)).bool()
+    neg_inf = t.tensor(-1.0e6).to(attn_scores.device)
+    masked_attn_scores = t.where(mask, attn_scores, neg_inf)
+    return masked_attn_scores
+
+raw_attention = model.W_pos @ model.W_Q[0, 7] @ model.W_K[0, 7].T @ model.W_pos.T
+scaled_attention = raw_attention / model.cfg.d_head ** 0.5
+masked_attention = mask_scores(scaled_attention)
+softmax_attention = t.softmax(masked_attention, dim=-1)
+pos_by_pos_pattern = softmax_attention
+print(pos_by_pos_pattern.shape)
+
+tests.test_pos_by_pos_pattern(pos_by_pos_pattern, model, layer, head_index)
+
+# %%
+
+print(f"Avg lower-diagonal value: {pos_by_pos_pattern.diag(-1).mean():.4f}")
+
+imshow(
+    utils.to_numpy(pos_by_pos_pattern[:100, :100]), 
+    labels={"x": "Key", "y": "Query"}, 
+    title="Attention patterns for prev-token QK circuit, first 100 indices",
+    width=700
+)
+
+# %%
+
+def decompose_qk_input(cache: ActivationCache) -> t.Tensor:
+    '''
+    Output is decomposed_qk_input, with shape [2+num_heads, seq, d_model]
+
+    The [i, :, :]th element is y_i (from notation above)
+    '''
+    embed = cache['embed']
+    pos_embed = cache['pos_embed']
+    embed_and_pos_embed = t.stack([embed, pos_embed], dim=0)
+    attn_results = einops.rearrange(cache['result', 0, 'attn'], 'seq num_heads d_model -> num_heads seq d_model')
+    result = t.cat([embed_and_pos_embed, attn_results], dim=0)
+    return result
+
+def decompose_q(decomposed_qk_input: t.Tensor, ind_head_index: int) -> t.Tensor:
+    '''
+    Output is decomposed_q with shape [2+num_heads, position, d_head]
+
+    The [i, :, :]th element is y_i @ W_Q (so the sum along axis 0 is just the q-values)
+    '''
+    W_Q = model.W_Q[1, ind_head_index]
+    return einops.einsum(decomposed_qk_input, W_Q, "num_heads seq d_model, d_model d_head -> num_heads seq d_head")
+
+def decompose_k(decomposed_qk_input: t.Tensor, ind_head_index: int) -> t.Tensor:
+    '''
+    Output is decomposed_k with shape [2+num_heads, position, d_head]
+
+    The [i, :, :]th element is y_i @ W_K (so the sum along axis 0 is just the k-values)
+    '''
+    W_K = model.W_K[1, ind_head_index]
+    return einops.einsum(decomposed_qk_input, W_K, "num_heads seq d_model, d_model d_head -> num_heads seq d_head")
+
+
+ind_head_index = 4
+# First we get decomposed q and k input, and check they're what we expect
+decomposed_qk_input = decompose_qk_input(rep_cache)
+decomposed_q = decompose_q(decomposed_qk_input, ind_head_index)
+decomposed_k = decompose_k(decomposed_qk_input, ind_head_index)
+t.testing.assert_close(decomposed_qk_input.sum(0), rep_cache["resid_pre", 1] + rep_cache["pos_embed"], rtol=0.01, atol=1e-05)
+t.testing.assert_close(decomposed_q.sum(0), rep_cache["q", 1][:, ind_head_index], rtol=0.01, atol=0.001)
+t.testing.assert_close(decomposed_k.sum(0), rep_cache["k", 1][:, ind_head_index], rtol=0.01, atol=0.01)
+# Second, we plot our results
+component_labels = ["Embed", "PosEmbed"] + [f"0.{h}" for h in range(model.cfg.n_heads)]
+for decomposed_input, name in [(decomposed_q, "query"), (decomposed_k, "key")]:
+    imshow(
+        utils.to_numpy(decomposed_input.pow(2).sum([-1])), 
+        labels={"x": "Position", "y": "Component"},
+        title=f"Norms of components of {name}", 
+        y=component_labels,
+        width=1000, height=400
+    )
+
+# %%
+
+def decompose_attn_scores(decomposed_q: t.Tensor, decomposed_k: t.Tensor) -> t.Tensor:
+    '''
+    Output is decomposed_scores with shape [query_component, key_component, query_pos, key_pos]
+
+    The [i, j, :, :]th element is y_i @ W_QK @ y_j^T (so the sum along both first axes are the attention scores)
+    '''
+    return einops.einsum(decomposed_q, decomposed_k, "num_heads_q seq_q d_head, num_heads_k seq_k d_head -> num_heads_q num_heads_k seq_q seq_k")
+
+
+tests.test_decompose_attn_scores(decompose_attn_scores, decomposed_q, decomposed_k)
+
+# %%
+
+decomposed_scores = decompose_attn_scores(decomposed_q, decomposed_k)
+decomposed_stds = einops.reduce(
+    decomposed_scores, 
+    "query_decomp key_decomp query_pos key_pos -> query_decomp key_decomp", 
+    t.std
+)
+
+# First plot: attention score contribution from (query_component, key_component) = (Embed, L0H7)
+imshow(
+    utils.to_numpy(t.tril(decomposed_scores[0, 9])), 
+    title="Attention score contributions from (query, key) = (embed, output of L0H7)",
+    width=800
+)
+
+# Second plot: std dev over query and key positions, shown by component
+imshow(
+    utils.to_numpy(decomposed_stds), 
+    labels={"x": "Key Component", "y": "Query Component"},
+    title="Standard deviations of attention score contributions (by key and query component)", 
+    x=component_labels, 
+    y=component_labels,
+    width=800
+)
+
+# %%
+
+def find_K_comp_full_circuit(
+    model: HookedTransformer,
+    prev_token_head_index: int,
+    ind_head_index: int
+) -> FactoredMatrix:
+    '''
+    Returns a (vocab, vocab)-size FactoredMatrix, with the first dimension being the query side and the second dimension being the key side (going via the previous token head)
+    '''
+    W_E = model.W_E
+    W_Q = model.W_Q[1, ind_head_index]
+    W_K = model.W_K[1, ind_head_index]
+    W_O = model.W_O[0, prev_token_head_index]
+    W_V = model.W_V[0, prev_token_head_index]
+    print(W_E.shape, W_Q.shape, W_K.shape, W_O.shape, W_V.shape)
+
+    return FactoredMatrix(W_E @ W_Q, (W_E @ W_V @ W_O @ W_K).T)
+
+
+prev_token_head_index = 7
+ind_head_index = 4
+K_comp_circuit = find_K_comp_full_circuit(model, prev_token_head_index, ind_head_index)
+
+tests.test_find_K_comp_full_circuit(find_K_comp_full_circuit, model)
+
+print(f"Fraction of tokens where the highest activating key is the same token: {top_1_acc(K_comp_circuit.T):.4f}")
